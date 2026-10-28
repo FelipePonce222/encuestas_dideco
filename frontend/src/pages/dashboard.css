@@ -1,0 +1,58 @@
+.dashboard-container {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #ffffff;
+}
+
+.dashboard-hero {
+  height: 340px;
+  width: 100%;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url("https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=1200&auto=format&fit=crop");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  text-align: center;
+}
+
+.dashboard-hero-title {
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.dashboard-action-bar {
+  background-color: #3d9735;
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  border-top: 1px solid #3d9735;
+  width: 100%;
+}
+
+.dashboard-action-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  transition: opacity 0.2s;
+}
+
+.dashboard-action-btn:hover {
+  opacity: 0.85;
+}
+
+.dashboard-main {
+  padding: 2rem 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}

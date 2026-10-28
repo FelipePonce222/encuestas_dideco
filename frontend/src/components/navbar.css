@@ -1,0 +1,90 @@
+.navbar-header {
+  background-color: #3d9735;
+  color: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.navbar-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.5rem; /* Padding reducido arriba y abajo */
+  width: 100%;
+}
+
+.navbar-logo {
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.navbar-user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-welcome {
+  font-size: 0.95rem;
+}
+
+.navbar-toggle-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.navbar-dropdown {
+  background-color: #3d9735;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-top: 1px solid #48bb78;
+}
+
+.navbar-menu-item {
+  background: none;
+  border: none;
+  color: #ffffff;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.navbar-menu-item.logout {
+  color: #fee2e2;
+}
+
+.navbar-divider {
+  border-color: #3d9735;
+  margin: 0.25rem 0;
+}
+
+.navbar-logo-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.navbar-logo-img {
+  height: 45px; /* Define una altura fija bien elegante */
+  width: auto;  /* Mantiene la proporción del escudo y texto */
+  object-fit: contain;
+}
+
