@@ -57,7 +57,7 @@ export default function Footer() {
           <a href="https://www.facebook.com/MunicipalidadLaGranja" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
             <FaFacebook />
           </a>
-          <a href="https://www.instagram.com/munilagranja/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+          <a href="https://www.instagram.com/muni_lagranja/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
             <FaInstagram />
           </a>
           <a href="https://twitter.com/munilagranja" target="_blank" rel="noopener noreferrer" aria-label="Twitter">

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
+import Footer from '../components/footer';
 import './Dashboard.css';
 import heroBg from '../assets/hero-bg.png';
-import Footer from '../components/footer'; // <- Importante
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -12,20 +12,35 @@ export default function Dashboard() {
     <div className="dashboard-container">
       <Navbar usuario="José" />
 
-      <div className="dashboard-hero" style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url(${heroBg})` }}>
+      <div 
+        className="dashboard-hero" 
+        style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url(${heroBg})` }}
+      >
         <h1 className="dashboard-hero-title">ENCUESTAS PERSONAS MAYORES</h1>
-        </div>
+      </div>
 
       <div className="dashboard-action-bar">
-        <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
+        <button 
+          className="dashboard-action-btn" 
+          onClick={() => navigate('/nueva-encuesta')}
+        >
           Nueva Encuesta
         </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/BusquedaRut.jsx')}>
+        
+        <button 
+          className="dashboard-action-btn" 
+          onClick={() => navigate('/busqueda-rut')}
+        >
           Búsqueda por Rut
         </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-franja')}>
+        
+        <button 
+          className="dashboard-action-btn" 
+          onClick={() => navigate('/busqueda-franja')}
+        >
           Búsqueda por Franja
         </button>
+        
         <button 
           className="dashboard-action-btn" 
           onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}
@@ -39,6 +54,7 @@ export default function Dashboard() {
           Selecciona una opción del menú o de la barra principal para comenzar a trabajar.
         </p>
       </main>
+
       <Footer />
     </div>
   );
