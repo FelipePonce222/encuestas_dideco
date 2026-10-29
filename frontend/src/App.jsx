@@ -6,6 +6,7 @@ import Dashboard from './pages/dashboard';
 import BusquedaRut from './pages/BusquedaRut';
 import BusquedaFranja from './pages/BusquedaFranja';
 import NuevaEncuesta from './pages/NuevaEncuesta';
+import MiPerfil from './pages/MiPerfil'; // <- Import nuevo
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/busqueda-rut" element={<BusquedaRut />} />
         <Route path="/busqueda-franja" element={<BusquedaFranja />} />
         <Route path="/nueva-encuesta" element={<NuevaEncuesta />} />
+        <Route path="/perfil" element={<MiPerfil />} /> {/* <- Ruta nueva */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>

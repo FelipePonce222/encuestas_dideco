@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaBars, FaTimes, FaFileAlt, FaSearch, FaMapMarkedAlt, FaBuilding, FaSignOutAlt } from 'react-icons/fa';
+import { 
+  FaUserCircle, 
+  FaBars, 
+  FaTimes, 
+  FaFileAlt, 
+  FaSearch, 
+  FaMapMarkedAlt, 
+  FaBuilding, 
+  FaSignOutAlt 
+} from 'react-icons/fa';
 import logoLaGranja from '../assets/Escudo-y-texto.png';
 import './navbar.css';
 
@@ -18,7 +27,11 @@ export default function Navbar({ usuario = "José" }) {
   return (
     <header className="navbar-header">
       <div className="navbar-topbar">
-        <div className="navbar-logo-container" onClick={() => navigate('/dashboard')}>
+        <div 
+          className="navbar-logo-container" 
+          onClick={() => navigate('/dashboard')}
+          style={{ cursor: 'pointer' }}
+        >
           <img 
             src={logoLaGranja} 
             alt="Escudo Ilustre Municipalidad de La Granja" 
@@ -27,7 +40,16 @@ export default function Navbar({ usuario = "José" }) {
         </div>
         
         <div className="navbar-user-section">
-          <span className="navbar-welcome">Hola, {usuario}</span>
+          {/* Clic en Hola, usuario lleva directamente a Mi Perfil */}
+          <span 
+            className="navbar-welcome" 
+            onClick={() => navigate('/perfil')}
+            style={{ cursor: 'pointer' }}
+            title="Ir a Mi Perfil"
+          >
+            Hola, {usuario}
+          </span>
+
           <button className="navbar-toggle-btn" onClick={toggleMenu}>
             {menuOpen ? <FaTimes /> : <FaBars />} {menuOpen ? 'Cerrar' : 'Menú'}
           </button>
@@ -45,7 +67,13 @@ export default function Navbar({ usuario = "José" }) {
           <button className="navbar-menu-item" onClick={() => handleNavigation('/busqueda-franja')}>
             <FaMapMarkedAlt /> Búsqueda por Franja
           </button>
-          <button className="navbar-menu-item" onClick={() => handleNavigation('/municipalidad')}>
+          <button 
+            className="navbar-menu-item" 
+            onClick={() => {
+              setMenuOpen(false);
+              window.open('https://www.municipalidadlagranja.cl/', '_blank');
+            }}
+          >
             <FaBuilding /> Municipalidad
           </button>
           <hr className="navbar-divider" />
