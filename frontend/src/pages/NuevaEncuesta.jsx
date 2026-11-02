@@ -282,11 +282,11 @@ export default function NuevaEncuesta() {
                     </div>
                     <div className="form-group">
                       <label>3) Teléfono de la persona mayor:</label>
-                      <input type="text" name="pm_telefono" value={formData.pm_telefono} onChange={handleChange} />
+                      <input type="text" name="pm_telefono" placeholder="Ej: 56911112222" value={formData.pm_telefono} onChange={handleChange} />
                     </div>
                     <div className="form-group full">
                       <label>4) Contacto de Emergencia (Nombre, Relación, Teléfono):</label>
-                      <input type="text" name="contacto_emergencia" placeholder="Ej: 934358765, Karen Lagos, Hija" value={formData.contacto_emergencia} onChange={handleChange} />
+                      <input type="text" name="contacto_emergencia" placeholder="Ej: 56934358765, Karen Lagos, Hija" value={formData.contacto_emergencia} onChange={handleChange} />
                     </div>
                     <div className="form-group">
                       <label>5) Edad: *</label>

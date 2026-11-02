@@ -11,6 +11,8 @@ CORS(app)
 
 # Inicializar DB local al arrancar
 DB_NAME = "dideco_encuestas.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'dideco_encuestas.db')
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
@@ -34,6 +36,8 @@ def init_db():
 
 
 init_db()
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
@@ -117,3 +121,47 @@ def buscar_por_rut(rut):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
+@app.route('/api/encuestas', methods=['POST', 'OPTIONS'])
+def guardar_encuesta():
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+
+    try:
+        data = request.json
+        
+        # Calcular el puntaje IVPM automáticamente con los datos ingresados
+        score, nivel, _ = calcular_ivpm_registro(data)
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # Insertar los datos principales en la tabla vecinos
+        cursor.execute('''
+            INSERT INTO vecinos (
+                rut, nombre, edad, direccion, unidad_vecinal, franja, hallazgo, ivpm_score, nivel_riesgo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('pm_rut', 'SIN RUT'),
+            data.get('pm_nombre', 'SIN NOMBRE'),
+            data.get('edad', None),
+            data.get('direccion', ''),
+            data.get('villa', ''),
+            "Franja Nueva",
+            data.get('hallazgo', ''),
+            score,
+            nivel
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'message': 'Encuesta guardada con éxito',
+            'ivpm_score': score,
+            'nivel_riesgo': nivel
+        }), 201
+
+    except Exception as e:
+        print(f"Error al guardar encuesta: {e}")
+        return jsonify({'error': str(e)}), 500
