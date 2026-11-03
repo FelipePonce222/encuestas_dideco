@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import './NuevaEncuesta.css';
@@ -149,6 +150,24 @@ export default function NuevaEncuesta() {
 
       <main className="encuesta-main">
         <div className="encuesta-card">
+          {/* Botón superior de regreso al Dashboard */}
+          <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-start' }}>
+            <button 
+              type="button"
+              onClick={() => navigate('/dashboard')} 
+              style={{
+                padding: '8px 16px',
+                cursor: 'pointer',
+                borderRadius: '6px',
+                border: '1px solid #ccc',
+                background: '#f8f9fa',
+                fontWeight: 'bold',
+                color: '#495057'
+              }}
+            >
+              ⬅ Volver
+            </button>
+          </div>
           <div className="encuesta-header">
             <h2>ENCUESTA COMUNAL DE PERSONAS MAYORES 2026</h2>
             <p>Ilustre Municipalidad de La Granja — DIDECO</p>
