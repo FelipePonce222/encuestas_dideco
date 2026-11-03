@@ -290,7 +290,7 @@ export default function NuevaEncuesta() {
                     </div>
                     <div className="form-group">
                       <label>5) Edad: *</label>
-                      <input type="number" name="edad" min="50" max="115" value={formData.edad} onChange={handleChange} required />
+                      <input type="number" name="edad" min="60" max="115" value={formData.edad} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
                       <label>6) Género: *</label>
