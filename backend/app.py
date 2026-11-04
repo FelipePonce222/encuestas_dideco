@@ -7,6 +7,7 @@ import pandas as pd
 import os
 from IVPM_calculator import calcular_ivpm_registro
 from database import get_connection as get_db_connection, init_db
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -122,6 +123,9 @@ def guardar_encuesta():
         print("\n--- DATOS RECIBIDOS EN FLASK ---")
         print(data)
 
+        # Generar timestamp local si no viene en los datos
+        fecha_registro = data.get('fecha_registro') or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         score = 0
         nivel = 'Sin evaluar'
         try:
@@ -132,9 +136,14 @@ def guardar_encuesta():
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Asegurar columnas necesarias
         try:
             cursor.execute("ALTER TABLE vecinos ADD COLUMN datos_completos TEXT")
-            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+            
+        try:
+            cursor.execute("ALTER TABLE vecinos ADD COLUMN fecha_registro DATETIME")
         except sqlite3.OperationalError:
             pass
 
@@ -149,22 +158,25 @@ def guardar_encuesta():
         franja = data.get('franja') or 'Sin franja'
         hallazgo = data.get('hallazgo') or ''
 
+        # Añadimos la fecha_registro también dentro del JSON completo por respaldo
+        data['fecha_registro'] = fecha_registro
         datos_json = json.dumps(data, ensure_ascii=False)
 
         cursor.execute('''
             INSERT INTO vecinos (
-                rut, nombre, edad, direccion, unidad_vecinal, franja, hallazgo, ivpm_score, nivel_riesgo, datos_completos
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (rut, nombre, edad, direccion, villa, franja, hallazgo, score, nivel, datos_json))
+                rut, nombre, edad, direccion, unidad_vecinal, franja, hallazgo, ivpm_score, nivel_riesgo, datos_completos, fecha_registro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (rut, nombre, edad, direccion, villa, franja, hallazgo, score, nivel, datos_json, fecha_registro))
 
         conn.commit()
         conn.close()
 
-        print(" SUCCESS: Registro guardado en BD con datos completos")
+        print(f" SUCCESS: Encuesta guardada exitosamente con fecha: {fecha_registro}")
         return jsonify({
             'message': 'Encuesta guardada con éxito',
             'ivpm_score': score,
-            'nivel_riesgo': nivel
+            'nivel_riesgo': nivel,
+            'fecha_registro': fecha_registro
         }), 201
 
     except Exception as e:
@@ -193,6 +205,60 @@ def exportar_excel():
 
     except Exception as e:
         print(f"Error al exportar a Excel: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/dashboard/stats', methods=['GET'])
+def obtener_dashboard_stats():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 1. Total encuestas realizadas
+        cursor.execute("SELECT COUNT(*) FROM vecinos")
+        total_encuestas = cursor.fetchone()[0]
+
+        # 2. Conteo por Nivel de Riesgo IVPM
+        cursor.execute("""
+            SELECT nivel_riesgo, COUNT(*) as cantidad 
+            FROM vecinos 
+            GROUP BY nivel_riesgo
+        """)
+        filas_riesgo = cursor.fetchall()
+        
+        niveles_riesgo = {
+            'Vulnerabilidad Crítica': 0,
+            'Vulnerabilidad Alta': 0,
+            'Vulnerabilidad Moderada': 0,
+            'Vulnerabilidad Baja': 0,
+            'Sin evaluar': 0
+        }
+        for fila in filas_riesgo:
+            key = fila['nivel_riesgo'] if fila['nivel_riesgo'] else 'Sin evaluar'
+            niveles_riesgo[key] = fila['cantidad']
+
+        # 3. Conteo por Hallazgo / Estado de visita
+        cursor.execute("""
+            SELECT hallazgo, COUNT(*) as cantidad 
+            FROM vecinos 
+            GROUP BY hallazgo
+        """)
+        filas_hallazgo = cursor.fetchall()
+        hallazgos = {}
+        for fila in filas_hallazgo:
+            key = fila['hallazgo'] if fila['hallazgo'] else 'No especificado'
+            hallazgos[key] = fila['cantidad']
+
+        conn.close()
+
+        return jsonify({
+            'total_encuestas': total_encuestas,
+            'niveles_riesgo': niveles_riesgo,
+            'hallazgos': hallazgos
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error al consultar estadísticas del dashboard: {e}")
         return jsonify({'error': str(e)}), 500
 
 # ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo

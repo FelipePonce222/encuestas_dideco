@@ -39,7 +39,13 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <div className="login-icon-container">🏢</div>
+        <img 
+            src="/Escudo_de_La_Granja.svg" 
+            alt="Logo Municipalidad" 
+            height="65" 
+            className="mb-3 rounded"
+            onError={(e) => { e.target.style.display = 'none' }}
+          />
         <h2 className="login-title">DIDECO - La Granja</h2>
         <p className="login-subtitle">Sistema de Encuestas Adulto Mayor</p>
 
@@ -54,7 +60,7 @@ export default function Login() {
             <label className="login-label">RUT Funcionario</label>
             <input
               type="text"
-              placeholder="Ej: 21555499-6"
+              placeholder="Ej: 01222333-4"
               value={rut}
               onChange={(e) => setRut(e.target.value)}
               className="login-input"

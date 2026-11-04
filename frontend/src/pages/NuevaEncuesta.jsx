@@ -6,6 +6,7 @@ import './NuevaEncuesta.css';
 
 export default function NuevaEncuesta() {
   const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     // A. Encuestador
     encuestador_nombre: '',
@@ -104,6 +105,8 @@ export default function NuevaEncuesta() {
   });
 
   const [mensajeEnvio, setMensajeEnvio] = useState('');
+
+  // 🚀 Cargar automáticamente el encuestador activo desde localStorage
   useEffect(() => {
     const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
     if (usuarioGuardado.nombre) {
@@ -113,6 +116,7 @@ export default function NuevaEncuesta() {
       }));
     }
   }, []);
+
   const hallazgoAcepta = formData.hallazgo.includes('acepta participar') || formData.hallazgo.includes('oficina de DIDECO');
   const hallazgoCuidador = formData.hallazgo.includes('cuidador(a) responderá');
   const encuestaCompleta = hallazgoAcepta || hallazgoCuidador;
@@ -133,17 +137,34 @@ export default function NuevaEncuesta() {
     });
   };
 
+  // 🕒 Envío con Fecha y Hora exacta del sistema
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const ahora = new Date();
+    const fechaHoraFormateada = ahora.toLocaleString('es-CL', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const payload = {
+      ...formData,
+      fecha_registro: fechaHoraFormateada
+    };
+
     try {
       const response = await fetch('http://localhost:5000/api/encuestas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        setMensajeEnvio('✅ Encuesta guardada exitosamente en la base de datos.');
+        setMensajeEnvio(`✅ Encuesta guardada exitosamente (${fechaHoraFormateada}).`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setMensajeEnvio('⚠️ Ocurrió un problema al guardar la encuesta.');
@@ -159,7 +180,6 @@ export default function NuevaEncuesta() {
 
       <main className="encuesta-main">
         <div className="encuesta-card">
-          {/* Botón superior de regreso al Dashboard */}
           <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-start' }}>
             <button 
               type="button"
@@ -177,6 +197,7 @@ export default function NuevaEncuesta() {
               ⬅ Volver
             </button>
           </div>
+
           <div className="encuesta-header">
             <h2>ENCUESTA COMUNAL DE PERSONAS MAYORES 2026</h2>
             <p>Ilustre Municipalidad de La Granja — DIDECO</p>
