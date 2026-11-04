@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
@@ -8,7 +8,7 @@ export default function NuevaEncuesta() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // A. Encuestador
-    encuestador_nombre: 'José Martínez',
+    encuestador_nombre: '',
     encuestador_depto: 'DIDECO - La Granja',
 
     // B. Territorial
@@ -104,7 +104,15 @@ export default function NuevaEncuesta() {
   });
 
   const [mensajeEnvio, setMensajeEnvio] = useState('');
-
+  useEffect(() => {
+    const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
+    if (usuarioGuardado.nombre) {
+      setFormData(prev => ({
+        ...prev,
+        encuestador_nombre: usuarioGuardado.nombre
+      }));
+    }
+  }, []);
   const hallazgoAcepta = formData.hallazgo.includes('acepta participar') || formData.hallazgo.includes('oficina de DIDECO');
   const hallazgoCuidador = formData.hallazgo.includes('cuidador(a) responderá');
   const encuestaCompleta = hallazgoAcepta || hallazgoCuidador;

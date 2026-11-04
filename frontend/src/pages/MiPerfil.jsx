@@ -1,20 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import './MiPerfil.css';
 
 export default function MiPerfil() {
   const [usuario, setUsuario] = useState({
-    nombre: 'José Martínez',
-    rut: '19.876.543-2',
+    nombre: '',
+    rut: '',
     depto: 'DIDECO - La Granja',
-    cargo: 'Encuestador / Analista Territorial',
-    email: 'jose.martinez@lagranja.cl',
-    telefono: '+56 9 1234 5678',
+    cargo: '',
+    email: '',
+    telefono: '',
     password: ''
   });
 
   const [mensaje, setMensaje] = useState('');
+
+  // 🚀 Cargar datos del usuario logueado desde localStorage al montar el componente
+  useEffect(() => {
+    const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
+    
+    if (usuarioGuardado.rut) {
+      // Generar email institucional a partir del nombre si no viene en el objeto
+      const primerNombre = usuarioGuardado.nombre ? usuarioGuardado.nombre.split(' ')[0].toLowerCase() : 'usuario';
+      const primerApellido = usuarioGuardado.nombre && usuarioGuardado.nombre.split(' ')[1] 
+        ? usuarioGuardado.nombre.split(' ')[1].toLowerCase() 
+        : 'dideco';
+
+      setUsuario(prev => ({
+        ...prev,
+        nombre: usuarioGuardado.nombre || 'Funcionario Municipal',
+        rut: usuarioGuardado.rut || '',
+        cargo: usuarioGuardado.cargo || 'Funcionario DIDECO',
+        email: `${primerNombre}.${primerApellido}@lagranja.cl`,
+        telefono: '+56 9 1234 5678'
+      }));
+    }
+  }, []);
+
+  // 🎨 Generar iniciales dinámicas para el avatar (Ej: Felipe Ponce -> FP)
+  const getIniciales = (nombre) => {
+    if (!nombre) return 'US';
+    const partes = nombre.trim().split(' ');
+    if (partes.length >= 2) {
+      return `${partes[0][0]}${partes[1][0]}`.toUpperCase();
+    }
+    return partes[0].slice(0, 2).toUpperCase();
+  };
 
   const handleChange = (e) => {
     setUsuario({
@@ -25,21 +57,28 @@ export default function MiPerfil() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Aquí luego conectaremos con la API para actualizar en BD
+    // Actualizar también en el localStorage para mantener coherencia
+    const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const nuevoUsuarioGuardado = {
+      ...usuarioGuardado,
+      nombre: usuario.nombre
+    };
+    localStorage.setItem('usuario', JSON.stringify(nuevoUsuarioGuardado));
+
     setMensaje('¡Información actualizada exitosamente!');
     setTimeout(() => setMensaje(''), 4000);
   };
 
   return (
     <div className="perfil-container">
-      <Navbar/>
+      <Navbar />
 
       <main className="perfil-main">
         <div className="perfil-card">
           
           <div className="perfil-header">
             <div className="perfil-avatar">
-              JM
+              {getIniciales(usuario.nombre)}
             </div>
             <div className="perfil-title-info">
               <h2>{usuario.nombre}</h2>
