@@ -32,7 +32,7 @@ export default function MiPerfil() {
 
   return (
     <div className="perfil-container">
-      <Navbar usuario="José" />
+      <Navbar/>
 
       <main className="perfil-main">
         <div className="perfil-card">

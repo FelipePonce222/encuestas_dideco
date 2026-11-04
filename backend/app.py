@@ -1,4 +1,4 @@
-import json  # <-- ASEGÚRATE DE TENER ESTO EN LA LÍNEA 1 O 2 DE APP.PY
+import json
 from flask import Flask, request, jsonify, send_file
 import io
 from flask_cors import CORS
@@ -6,51 +6,20 @@ import sqlite3
 import pandas as pd
 import os
 from IVPM_calculator import calcular_ivpm_registro
+from database import get_connection as get_db_connection, init_db
 
 app = Flask(__name__)
 CORS(app)
 
+# 🚀 Inicializar base de datos y tablas de funcionarios/vecinos
 DB_NAME = "dideco_encuestas.db"
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS vecinos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            rut TEXT,
-            nombre TEXT,
-            edad INTEGER,
-            direccion TEXT,
-            unidad_vecinal TEXT,
-            franja TEXT,
-            hallazgo TEXT,
-            ivpm_score REAL,
-            nivel_riesgo TEXT,
-            datos_completos TEXT
-        )
-    ''')
-    
-    # Intentar agregar la columna si la tabla ya existía previamente
-    try:
-        cursor.execute('ALTER TABLE vecinos ADD COLUMN datos_completos TEXT')
-    except sqlite3.OperationalError:
-        pass # La columna ya existe
-
-    conn.commit()
-    conn.close()
-    init_db()
+init_db()
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json or {}
-    rut = data.get('rut')
-    password = data.get('password')
+    rut = data.get('rut', '').strip()
+    password = data.get('password', '').strip()
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -72,7 +41,6 @@ def login():
         }), 200
     else:
         return jsonify({"status": "error", "message": "RUT o contraseña incorrectos"}), 401
-
 
 @app.route('/api/importar-excel', methods=['POST'])
 def importar_excel():
@@ -119,7 +87,6 @@ def buscar_vecino(rut):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Buscamos al vecino por RUT
         cursor.execute("SELECT * FROM vecinos WHERE rut = ?", (rut,))
         vecino = cursor.fetchone()
         conn.close()
@@ -127,10 +94,8 @@ def buscar_vecino(rut):
         if not vecino:
             return jsonify({'message': 'Vecino no encontrado'}), 404
 
-        # Convertimos la fila de la BD a diccionario
         vecino_dict = dict(vecino)
 
-        # Si existen datos_completos en formato JSON, los parseamos
         if vecino_dict.get('datos_completos'):
             try:
                 vecino_dict['encuesta_detalle'] = json.loads(vecino_dict['datos_completos'])
@@ -157,7 +122,6 @@ def guardar_encuesta():
         print("\n--- DATOS RECIBIDOS EN FLASK ---")
         print(data)
 
-        # 1. Intentar calcular IVPM (si falla la función, no interrumpe el guardado)
         score = 0
         nivel = 'Sin evaluar'
         try:
@@ -165,22 +129,18 @@ def guardar_encuesta():
         except Exception as err_calc:
             print(f"⚠️ Aviso: No se pudo calcular IVPM en este registro: {err_calc}")
 
-        # 2. Conectar a la BD
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # ⚡ Asegurar que la columna 'datos_completos' exista en el archivo SQLite
         try:
             cursor.execute("ALTER TABLE vecinos ADD COLUMN datos_completos TEXT")
             conn.commit()
         except sqlite3.OperationalError:
             pass
 
-        # 3. Extraer datos principales
         rut = data.get('pm_rut') or 'SIN RUT'
         nombre = data.get('pm_nombre') or 'SIN NOMBRE'
         
-        # Formatear edad de manera segura
         edad_val = data.get('edad')
         edad = int(edad_val) if edad_val and str(edad_val).isdigit() else None
         
@@ -189,10 +149,8 @@ def guardar_encuesta():
         franja = data.get('franja') or 'Sin franja'
         hallazgo = data.get('hallazgo') or ''
 
-        # 4. Convertir los 55 campos a JSON
         datos_json = json.dumps(data, ensure_ascii=False)
 
-        # 5. Insertar en la BD
         cursor.execute('''
             INSERT INTO vecinos (
                 rut, nombre, edad, direccion, unidad_vecinal, franja, hallazgo, ivpm_score, nivel_riesgo, datos_completos
@@ -217,11 +175,9 @@ def guardar_encuesta():
 def exportar_excel():
     try:
         conn = get_db_connection()
-        # Leemos toda la tabla vecinos directo a un DataFrame de Pandas
         df = pd.read_sql_query("SELECT * FROM vecinos", conn)
         conn.close()
 
-        # Creamos un stream en memoria para no llenar el disco de archivos temporales
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Encuestas IVPM')
@@ -239,5 +195,6 @@ def exportar_excel():
         print(f"Error al exportar a Excel: {e}")
         return jsonify({'error': str(e)}), 500
 
+# ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

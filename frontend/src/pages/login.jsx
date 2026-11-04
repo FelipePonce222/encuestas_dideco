@@ -1,129 +1,85 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './login.css';
 
 export default function Login() {
   const [rut, setRut] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Intentando iniciar sesión con:", { rut, password });
-    
-    // REDIRECCIÓN DIRECTA AL DASHBOARD
-    navigate('/dashboard');
+    setErrorMsg('');
+    setCargando(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rut, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 'success') {
+        localStorage.setItem('usuario', JSON.stringify(data.user));
+        navigate('/dashboard');
+      } else {
+        setErrorMsg(data.message || 'Error en las credenciales.');
+      }
+    } catch (err) {
+      setErrorMsg('❌ No se pudo conectar con el servidor Flask.');
+    } finally {
+      setCargando(false);
+    }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.iconContainer}>
-          🏢
-        </div>
-        <h2 style={styles.title}>DIDECO - La Granja</h2>
-        <p style={styles.subtitle}>Sistema de Encuestas Adulto Mayor</p>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-icon-container">🏢</div>
+        <h2 className="login-title">DIDECO - La Granja</h2>
+        <p className="login-subtitle">Sistema de Encuestas Adulto Mayor</p>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>RUT Funcionario</label>
+        {errorMsg && (
+          <div className="login-alert-error">
+            {errorMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-input-group">
+            <label className="login-label">RUT Funcionario</label>
             <input
               type="text"
-              placeholder="12.345.678-K"
+              placeholder="Ej: 21555499-6"
               value={rut}
               onChange={(e) => setRut(e.target.value)}
-              style={styles.input}
+              className="login-input"
               required
             />
           </div>
 
-          <div style={styles.inputGroup}>
-            <label style={styles.label}>Contraseña</label>
+          <div className="login-input-group">
+            <label className="login-label">Contraseña</label>
+
             <input
               type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
+              className="login-input"
               required
             />
           </div>
 
-          <button type="submit" style={styles.button}>
-            Ingresar al Sistema
+          <button type="submit" className="login-button" disabled={cargando}>
+            {cargando ? 'Ingresando...' : 'Ingresar al Sistema'}
           </button>
         </form>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f1f5f9',
-    fontFamily: 'system-ui, -apple-system, sans-serif'
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    padding: '2.5rem',
-    borderRadius: '16px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)',
-    width: '100%',
-    maxWidth: '400px',
-    textAlign: 'center'
-  },
-  iconContainer: {
-    fontSize: '3rem',
-    marginBottom: '1rem',
-    color: '#2563eb'
-  },
-  title: {
-    margin: 0,
-    fontSize: '1.5rem',
-    color: '#1e293b',
-    fontWeight: '700'
-  },
-  subtitle: {
-    margin: '0.4rem 0 1.5rem 0',
-    fontSize: '0.9rem',
-    color: '#64748b'
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem'
-  },
-  inputGroup: {
-    textAlign: 'left'
-  },
-  label: {
-    display: 'block',
-    fontSize: '0.85rem',
-    color: '#334155',
-    fontWeight: '600',
-    marginBottom: '0.4rem'
-  },
-  input: {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.95rem',
-    outline: 'none',
-    boxSizing: 'border-box'
-  },
-  button: {
-    backgroundColor: '#2563eb',
-    color: '#ffffff',
-    border: 'none',
-    padding: '0.85rem',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '0.5rem'
-  }
-};

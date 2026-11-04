@@ -1,21 +1,16 @@
 import sqlite3
-import os
 
-# Nombre del archivo de base de datos local para desarrollo
-DB_FILE = "dideco_local.db"
+DB_FILE = "dideco_encuestas.db"
 
 def get_connection():
-    """Retorna una conexión a la base de datos local (SQLite)"""
     conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row  # Para acceder a los campos por nombre de columna
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    """Crea las tablas básicas y datos de prueba para desarrollo"""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Tabla Funcionario / Cuenta de prueba
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS funcionario (
             id_funcionario INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,17 +21,24 @@ def init_db():
         )
     ''')
 
-    # Insertar un funcionario de prueba si no existe
-    cursor.execute("SELECT * FROM funcionario WHERE rut = '12345678-9'")
-    if not cursor.fetchone():
-        cursor.execute('''
-            INSERT INTO funcionario (rut, nombre, cargo, password)
-            VALUES ('12345678-9', 'Jose Martinez', 'Trabajador Social', 'admin123')
-        ''')
+    # Lista con los 3 usuarios de prueba
+    usuarios_prueba = [
+        ('12345678-9', 'José Martínez', 'Trabajador Social', 'admin123'),
+        ('21555499-6', 'Felipe Ponce', 'Ingeniero Informático', 'contraprueba'),
+        ('98765432-1', 'Camila Silva', 'Coordinadora DIDECO', 'dideco2026')
+    ]
+
+    for rut, nombre, cargo, password in usuarios_prueba:
+        cursor.execute("SELECT * FROM funcionario WHERE rut = ?", (rut,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO funcionario (rut, nombre, cargo, password)
+                VALUES (?, ?, ?, ?)
+            ''', (rut, nombre, cargo, password))
 
     conn.commit()
     conn.close()
-    print("✅ Base de datos local SQLite inicializada correctamente.")
+    print("✅ Base de datos SQLite inicializada con los 3 usuarios de prueba.")
 
 if __name__ == "__main__":
     init_db()

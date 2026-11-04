@@ -13,15 +13,24 @@ import {
 import logoLaGranja from '../assets/Escudo-y-texto.png';
 import './navbar.css';
 
-export default function Navbar({ usuario = "José" }) {
+export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aquí
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  // 🔍 Si viene prop la usa, si no, busca en el localStorage.
+  const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const nombreMostrar = usuario || usuarioGuardado.nombre || 'Funcionario';
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   const handleNavigation = (path) => {
     setMenuOpen(false);
     navigate(path);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('usuario');
+    navigate('/login');
   };
 
   return (
@@ -40,14 +49,13 @@ export default function Navbar({ usuario = "José" }) {
         </div>
         
         <div className="navbar-user-section">
-          {/* Clic en Hola, usuario lleva directamente a Mi Perfil */}
           <span 
             className="navbar-welcome" 
             onClick={() => navigate('/perfil')}
             style={{ cursor: 'pointer' }}
             title="Ir a Mi Perfil"
           >
-            Hola, {usuario}
+            Hola, {nombreMostrar}
           </span>
 
           <button className="navbar-toggle-btn" onClick={toggleMenu}>
@@ -80,7 +88,7 @@ export default function Navbar({ usuario = "José" }) {
           <button className="navbar-menu-item" onClick={() => handleNavigation('/perfil')}>
             <FaUserCircle /> Mi Perfil
           </button>
-          <button className="navbar-menu-item logout" onClick={() => handleNavigation('/login')}>
+          <button className="navbar-menu-item logout" onClick={handleLogout}>
             <FaSignOutAlt /> Cerrar Sesión
           </button>
         </nav>

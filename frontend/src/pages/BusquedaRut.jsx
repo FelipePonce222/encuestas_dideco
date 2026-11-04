@@ -52,7 +52,7 @@ export default function BusquedaRut() {
 
   return (
     <div className="busqueda-container">
-      <Navbar usuario="José" />
+      <Navbar/>
 
       <main className="busqueda-main">
         <div className="busqueda-card">

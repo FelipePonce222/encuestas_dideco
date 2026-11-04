@@ -5,6 +5,7 @@ import Footer from '../components/footer';
 import './NuevaEncuesta.css';
 
 export default function NuevaEncuesta() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // A. Encuestador
     encuestador_nombre: 'José Martínez',
@@ -146,7 +147,7 @@ export default function NuevaEncuesta() {
 
   return (
     <div className="encuesta-container">
-      <Navbar usuario="José" />
+      <Navbar/>
 
       <main className="encuesta-main">
         <div className="encuesta-card">
