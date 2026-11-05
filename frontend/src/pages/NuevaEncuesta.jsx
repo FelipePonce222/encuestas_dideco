@@ -177,7 +177,20 @@ export default function NuevaEncuesta() {
   return (
     <div className="encuesta-container">
       <Navbar/>
-      
+      <div className="dashboard-action-bar">
+        <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
+          Búsqueda por Rut
+        </button>
+        <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
+          Generar Informe
+        </button>
+        <button 
+          className="dashboard-action-btn" 
+          onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}
+        >
+          Municipalidad
+        </button>
+      </div>
 
       <main className="encuesta-main">
         <div className="encuesta-card">

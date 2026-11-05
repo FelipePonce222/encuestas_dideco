@@ -54,9 +54,6 @@ export default function GenerarInforme() {
         <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
           Búsqueda por Rut
         </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
-          Generar Informe
-        </button>
         <button 
           className="dashboard-action-btn" 
           onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}

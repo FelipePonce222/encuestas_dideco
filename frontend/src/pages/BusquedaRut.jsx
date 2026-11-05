@@ -53,6 +53,20 @@ export default function BusquedaRut() {
   return (
     <div className="busqueda-container">
       <Navbar/>
+      <div className="dashboard-action-bar">
+        <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
+          Nueva Encuesta
+        </button>
+        <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
+          Generar Informe
+        </button>
+        <button 
+          className="dashboard-action-btn" 
+          onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}
+        >
+          Municipalidad
+        </button>
+      </div>
 
       <main className="busqueda-main">
         <div className="busqueda-card">
