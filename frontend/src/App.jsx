@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/login';
 import Dashboard from './pages/dashboard';
 import BusquedaRut from './pages/BusquedaRut';
-import BusquedaFranja from './pages/BusquedaFranja';
+import GenerarInforme from './pages/GenerarInforme';
 import NuevaEncuesta from './pages/NuevaEncuesta';
 import MiPerfil from './pages/MiPerfil';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -35,10 +35,10 @@ export default function App() {
           } 
         />
         <Route 
-          path="/busqueda-franja" 
+          path="/generar-informe" 
           element={
             <ProtectedRoute>
-              <BusquedaFranja />
+              <GenerarInforme />
             </ProtectedRoute>
           } 
         />

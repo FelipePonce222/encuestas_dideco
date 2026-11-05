@@ -1,13 +1,13 @@
 import json
 from flask import Flask, request, jsonify, send_file
-import io
 from flask_cors import CORS
-import sqlite3
-import pandas as pd
-import os
 from IVPM_calculator import calcular_ivpm_registro
 from database import get_connection as get_db_connection, init_db
 from datetime import datetime
+import io
+import pandas as pd
+import sqlite3
+import os
 
 
 app = Flask(__name__)
@@ -184,30 +184,6 @@ def guardar_encuesta():
         print(f"\n ERROR EXACTO EN BACKEND: {e}\n")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/exportar-excel', methods=['GET'])
-def exportar_excel():
-    try:
-        conn = get_db_connection()
-        df = pd.read_sql_query("SELECT * FROM vecinos", conn)
-        conn.close()
-
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Encuestas IVPM')
-        
-        output.seek(0)
-
-        return send_file(
-            output,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name='encuestas_ivpm_2026.xlsx'
-        )
-
-    except Exception as e:
-        print(f"Error al exportar a Excel: {e}")
-        return jsonify({'error': str(e)}), 500
-
 
 @app.route('/api/dashboard/stats', methods=['GET'])
 def obtener_dashboard_stats():
@@ -261,6 +237,105 @@ def obtener_dashboard_stats():
     except Exception as e:
         print(f"❌ Error al consultar estadísticas del dashboard: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reports/excel', methods=['GET'])
+def exportar_excel():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 1. Consultamos todos los registros
+        cursor.execute("SELECT * FROM vecinos")
+        filas = cursor.fetchall()
+        conn.close()
+
+        if not filas:
+            return jsonify({'error': 'No hay datos registrados para exportar'}), 404
+
+        # 2. Desenrollamos los datos JSON en diccionarios independientes
+        registros_procesados = []
+        for fila in filas:
+            # Convertimos la fila de la base de datos a un diccionario
+            item = dict(fila)
+            
+            # Extraemos y parseamos la columna JSON datos_completos
+            datos_json_str = item.pop('datos_completos', '{}')
+            try:
+                datos_preguntas = json.loads(datos_json_str) if datos_json_str else {}
+            except Exception:
+                datos_preguntas = {}
+
+            # Fusionamos los datos generales de la tabla con cada pregunta individual
+            # Las columnas principales (RUT, Nombre, Nivel Riesgo, Fecha) van primero
+            registro_limpio = {
+                'ID': item.get('id'),
+                'RUT Vecino': item.get('rut'),
+                'Nombre Completo': item.get('nombre'),
+                'Dirección': item.get('direccion'),
+                'Nivel Riesgo IVPM': item.get('nivel_riesgo'),
+                'Estado Visita / Hallazgo': item.get('hallazgo'),
+                'Fecha Registro': item.get('fecha_registro'),
+                'Encuestador': item.get('funcionario_rut')
+            }
+
+            # Agregamos cada una de las 54 preguntas como columnas propias
+            if isinstance(datos_preguntas, dict):
+                for clave_pregunta, valor_respuesta in datos_preguntas.items():
+                    # Formateamos las llaves del JSON para que se lean bonitas como encabezado
+                    encabezado_columna = clave_pregunta.replace('_', ' ').capitalize()
+                    registro_limpio[encabezado_columna] = valor_respuesta
+
+            registros_procesados.append(registro_limpio)
+
+        # 3. Convertimos la lista de registros a un DataFrame de Pandas
+        df = pd.DataFrame(registros_procesados)
+
+        # 4. Generamos el Excel en memoria con formato limpio
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Encuestas DIDECO 2026')
+        
+        output.seek(0)
+
+        # 5. Retornamos el archivo .xlsx
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='Reporte_Encuestas_PM_2026.xlsx'
+        )
+
+    except Exception as e:
+        print(f"❌ Error al desplegar preguntas en Excel: {e}")
+        return jsonify({'error': str(e)}), 500
+
+    
+# BusquedaRut.jsx: Endpoint para obtener las últimas 10 encuestas recientes --------------------------------------------------------------------------------------------------------------
+@app.route('/api/encuestas/recientes', methods=['GET'])
+def obtener_encuestas_recientes():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtenemos las últimas 10 encuestas ordenadas por fecha descendente
+        cursor.execute("""
+            SELECT id, rut, nombre, direccion, nivel_riesgo, hallazgo, fecha_registro 
+            FROM vecinos 
+            ORDER BY datetime(fecha_registro) DESC 
+            LIMIT 10
+        """)
+        filas = cursor.fetchall()
+        conn.close()
+
+        recientes = [dict(fila) for fila in filas]
+
+        return jsonify(recientes), 200
+
+    except Exception as e:
+        print(f"❌ Error al obtener encuestas recientes: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 
 # ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':

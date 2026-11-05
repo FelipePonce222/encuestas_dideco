@@ -1,0 +1,144 @@
+/* GenerarInforme.css */
+
+.informe-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7fafc;
+}
+
+.informe-main {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 20px;
+  flex: 1;
+}
+
+.informe-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.informe-header h1 {
+  color: #2d3748;
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.informe-header p {
+  color: #718096;
+  font-size: 1rem;
+}
+
+/* Alertas de Estado */
+.informe-alert {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.informe-alert.exito {
+  background-color: #c6f6d5;
+  color: #22543d;
+  border: 1px solid #9ae6b4;
+}
+
+.informe-alert.error {
+  background-color: #fed7d7;
+  color: #9b2c2c;
+  border: 1px solid #feb2b2;
+}
+
+/* Grid de Tarjetas */
+.informe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+/* Tarjeta Base */
+.informe-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.informe-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.informe-card-excel {
+  border-top: 6px solid #276749;
+}
+
+.informe-card-pdf {
+  border-top: 6px solid #e53e3e;
+}
+
+.informe-card-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.informe-card h3 {
+  color: #2d3748;
+  margin-bottom: 10px;
+  font-size: 1.25rem;
+}
+
+.informe-card p {
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.informe-card code {
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+/* Botones de Acción */
+.btn-informe {
+  margin-top: 25px;
+  padding: 12px 20px;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.btn-excel {
+  background-color: #276749;
+}
+
+.btn-excel:hover:not(:disabled) {
+  background-color: #1e4e37;
+}
+
+.btn-pdf {
+  background-color: #c53030;
+}
+
+.btn-pdf:hover {
+  background-color: #9b2c2c;
+}
+
+.btn-informe:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
