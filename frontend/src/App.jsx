@@ -6,20 +6,69 @@ import Dashboard from './pages/dashboard';
 import BusquedaRut from './pages/BusquedaRut';
 import BusquedaFranja from './pages/BusquedaFranja';
 import NuevaEncuesta from './pages/NuevaEncuesta';
-import MiPerfil from './pages/MiPerfil'; // <- Import nuevo
+import MiPerfil from './pages/MiPerfil';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
   return (
     <Router>
       <Routes>
+        {/* Rutas Públicas */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/busqueda-rut" element={<BusquedaRut />} />
-        <Route path="/busqueda-franja" element={<BusquedaFranja />} />
-        <Route path="/nueva-encuesta" element={<NuevaEncuesta />} />
-        <Route path="/perfil" element={<MiPerfil />} /> {/* <- Ruta nueva */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Rutas Privadas (Protegidas) */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/busqueda-rut" 
+          element={
+            <ProtectedRoute>
+              <BusquedaRut />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/busqueda-franja" 
+          element={
+            <ProtectedRoute>
+              <BusquedaFranja />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/nueva-encuesta" 
+          element={
+            <ProtectedRoute>
+              <NuevaEncuesta />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/perfil" 
+          element={
+            <ProtectedRoute>
+              <MiPerfil />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/mi-perfil" 
+          element={
+            <ProtectedRoute>
+              <MiPerfil />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Cualquier otra ruta desconocida redirige a Login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

@@ -9,6 +9,7 @@ from IVPM_calculator import calcular_ivpm_registro
 from database import get_connection as get_db_connection, init_db
 from datetime import datetime
 
+
 app = Flask(__name__)
 CORS(app)
 
