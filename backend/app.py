@@ -11,11 +11,13 @@ import os
 
 
 app = Flask(__name__)
+DB_PATH = os.path.join(os.path.dirname(__file__), 'instance', 'dideco.db')
 CORS(app)
 
 # 🚀 Inicializar base de datos y tablas de funcionarios/vecinos
 DB_NAME = "dideco_encuestas.db"
 init_db()
+
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -335,7 +337,44 @@ def obtener_encuestas_recientes():
         print(f"❌ Error al obtener encuestas recientes: {e}")
         return jsonify({'error': str(e)}), 500
 
+def dict_factory(cursor, row):
+    """Convierte las filas de SQLite en diccionarios de Python"""
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
+@app.route('/api/buscar/<rut>', methods=['GET'])
+def buscar_por_rut(rut):
+    # Limpiar el RUT recibido (quitar puntos y guión)
+    rut_limpio = (
+        rut.upper().replace('.', '').replace('-', '').strip()
+    )
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+
+    cursor.execute(
+        'SELECT * FROM encuestas WHERE rut = ? OR rut LIKE ?',
+        (rut_limpio, f'%{rut_limpio}%'),
+    )
+    resultado = cursor.fetchone()
+    conn.close()
+
+    if not resultado:
+        return jsonify({'mensaje': 'Vecino no encontrado'}), 404
+
+    # Convertir respuestas_json de texto a un objeto JSON/Diccionario
+    if resultado.get('respuestas_json'):
+        try:
+            resultado['respuestas_json'] = json.loads(
+                resultado['respuestas_json']
+            )
+        except Exception:
+            resultado['respuestas_json'] = {}
+
+    return jsonify(resultado), 200
 
 # ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':
