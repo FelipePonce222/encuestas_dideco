@@ -1,11 +1,32 @@
+import os
 import sqlite3
 
-DB_FILE = "dideco_encuestas.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# ---------------------------------------------------------------------------
+# ÚNICA base de datos del sistema.
+#
+# Por defecto vive junto al backend: backend/dideco_encuestas.db
+# Se puede mover (servidor, exe, etc.) sin tocar el código definiendo la
+# variable de entorno DIDECO_DB_PATH con la ruta del archivo.
+# Toda la app (app.py, importador.py) obtiene la conexión desde get_connection().
+# ---------------------------------------------------------------------------
+DB_PATH = os.path.abspath(
+    os.path.expanduser(
+        os.environ.get("DIDECO_DB_PATH", os.path.join(BASE_DIR, "dideco_encuestas.db"))
+    )
+)
+
 
 def get_connection():
-    conn = sqlite3.connect(DB_FILE)
+    """Abre una conexión a la base única. Filas accesibles por nombre de columna."""
+    carpeta = os.path.dirname(DB_PATH)
+    if carpeta:
+        os.makedirs(carpeta, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     conn = get_connection()
@@ -40,18 +61,17 @@ def init_db():
         )
     ''')
 
-    # ⚡ Migración suave: Intentar agregar la columna por si la BD ya existía previa a este cambio
-    try:
-        cursor.execute("ALTER TABLE vecinos ADD COLUMN fecha_registro DATETIME")
-    except sqlite3.OperationalError:
-        pass
+    # Migración suave: agrega columnas si la base existía antes de estos cambios
+    for columna, tipo in (("fecha_registro", "DATETIME"), ("datos_completos", "TEXT")):
+        try:
+            cursor.execute(f"ALTER TABLE vecinos ADD COLUMN {columna} {tipo}")
+        except sqlite3.OperationalError:
+            pass  # la columna ya existe
 
-    try:
-        cursor.execute("ALTER TABLE vecinos ADD COLUMN datos_completos TEXT")
-    except sqlite3.OperationalError:
-        pass
+    # Índice para que la búsqueda por RUT sea rápida
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_vecinos_rut ON vecinos(rut)")
 
-    # Usuarios de prueba
+    # Usuarios de prueba (se reemplazarán en la etapa de seguridad)
     usuarios_prueba = [
         ('12345678-9', 'José Martínez', 'Trabajador Social', 'admin123'),
         ('21555499-6', 'Felipe Ponce', 'Ingeniero Informático', 'contraprueba'),
@@ -59,7 +79,7 @@ def init_db():
     ]
 
     for rut, nombre, cargo, password in usuarios_prueba:
-        cursor.execute("SELECT * FROM funcionario WHERE rut = ?", (rut,))
+        cursor.execute("SELECT 1 FROM funcionario WHERE rut = ?", (rut,))
         if not cursor.fetchone():
             cursor.execute('''
                 INSERT INTO funcionario (rut, nombre, cargo, password)
@@ -68,7 +88,8 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ Base de datos SQLite inicializada con campo de fecha_registro.")
+
 
 if __name__ == "__main__":
     init_db()
+    print(f"Base de datos lista en: {DB_PATH}")

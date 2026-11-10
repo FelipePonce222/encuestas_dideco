@@ -1,30 +1,29 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Dependencias y compilaciones
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
 
-# Planillas Excel y archivos con datos sensibles
+# Bases de datos SQLite (Sensibles)
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Planillas de datos (Sensibles)
 *.xlsx
 *.xls
 *.csv
 
+# Entornos virtuales y configuraciones
+env/
+venv/
+.env
+.env.local
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Archivos de sistema operativo y editores
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+.vscode/
+.idea/

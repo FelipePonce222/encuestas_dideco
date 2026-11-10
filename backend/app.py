@@ -1,21 +1,19 @@
+import io
 import json
+from datetime import datetime
+
+import pandas as pd
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from IVPM_calculator import calcular_ivpm_registro
-from database import get_connection as get_db_connection, init_db
-from datetime import datetime
-import io
-import pandas as pd
-import sqlite3
-import os
 
+from IVPM_calculator import calcular_ivpm_registro
+from database import get_connection, init_db   # ← ÚNICA fuente de la base de datos
+from importador import importar_dataframe
 
 app = Flask(__name__)
-DB_PATH = os.path.join(os.path.dirname(__file__), 'instance', 'dideco.db')
 CORS(app)
 
-# 🚀 Inicializar base de datos y tablas de funcionarios/vecinos
-DB_NAME = "dideco_encuestas.db"
+# Crea las tablas (funcionario / vecinos) en la base única si no existen
 init_db()
 
 
@@ -25,7 +23,7 @@ def login():
     rut = data.get('rut', '').strip()
     password = data.get('password', '').strip()
 
-    conn = get_db_connection()
+    conn = get_connection()
     cursor = conn.cursor()
     
     cursor.execute("SELECT * FROM funcionario WHERE rut = ? AND password = ?", (rut, password))
@@ -50,45 +48,26 @@ def login():
 def importar_excel():
     if 'file' not in request.files:
         return jsonify({"error": "No se subió ningún archivo"}), 400
-    
-    file = request.files['file']
-    df = pd.read_excel(file)
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    registros_insertados = 0
 
-    for _, row in df.iterrows():
-        score, nivel, _ = calcular_ivpm_registro(row)
-        
-        cursor.execute('''
-            INSERT INTO vecinos (rut, nombre, edad, direccion, unidad_vecinal, franja, hallazgo, ivpm_score, nivel_riesgo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            str(row.get('2) Rut de la persona mayor:', '')),
-            str(row.get('1) Nombre Completo de la persona mayor:', '')),
-            row.get('5) Edad:', None),
-            str(row.get('1) Escribir dirección completa: ', '')),
-            str(row.get('2) Seleccionar Número de Unidad Vecinal:', '')),
-            "Franja 1",
-            str(row.get('5) Hallazgo/Situación de la Persona Mayor:', '')),
-            score,
-            nivel
-        ))
-        registros_insertados += 1
+    try:
+        df = pd.read_excel(request.files['file'])
+    except Exception as e:
+        print(f"Error al leer el Excel: {e}")
+        return jsonify({"error": "No se pudo leer el archivo. Verifica que sea un Excel (.xlsx) válido."}), 400
 
-    conn.commit()
-    conn.close()
+    franja = request.form.get('franja') or 'Franja 1'
+    r = importar_dataframe(df, franja=franja)
 
-    return jsonify({
-        "status": "ok",
-        "mensaje": f"Se importaron {registros_insertados} registros exitosamente."
-    })
+    mensaje = f"Se importaron {r['insertados']} registros exitosamente."
+    if r['duplicados']:
+        mensaje += f" ({r['duplicados']} duplicados omitidos)"
+
+    return jsonify({"status": "ok", "mensaje": mensaje, **r})
 
 @app.route('/api/vecino/<rut>', methods=['GET'])
 def buscar_vecino(rut):
     try:
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor()
         
         cursor.execute("SELECT * FROM vecinos WHERE rut = ?", (rut,))
@@ -136,19 +115,8 @@ def guardar_encuesta():
         except Exception as err_calc:
             print(f"⚠️ Aviso: No se pudo calcular IVPM en este registro: {err_calc}")
 
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor()
-
-        # Asegurar columnas necesarias
-        try:
-            cursor.execute("ALTER TABLE vecinos ADD COLUMN datos_completos TEXT")
-        except sqlite3.OperationalError:
-            pass
-            
-        try:
-            cursor.execute("ALTER TABLE vecinos ADD COLUMN fecha_registro DATETIME")
-        except sqlite3.OperationalError:
-            pass
 
         rut = data.get('pm_rut') or 'SIN RUT'
         nombre = data.get('pm_nombre') or 'SIN NOMBRE'
@@ -190,7 +158,7 @@ def guardar_encuesta():
 @app.route('/api/dashboard/stats', methods=['GET'])
 def obtener_dashboard_stats():
     try:
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         # 1. Total encuestas realizadas
@@ -243,7 +211,7 @@ def obtener_dashboard_stats():
 @app.route('/api/reports/excel', methods=['GET'])
 def exportar_excel():
     try:
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         # 1. Consultamos todos los registros
@@ -316,7 +284,7 @@ def exportar_excel():
 @app.route('/api/encuestas/recientes', methods=['GET'])
 def obtener_encuestas_recientes():
     try:
-        conn = get_db_connection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         # Obtenemos las últimas 10 encuestas ordenadas por fecha descendente
@@ -336,45 +304,6 @@ def obtener_encuestas_recientes():
     except Exception as e:
         print(f"❌ Error al obtener encuestas recientes: {e}")
         return jsonify({'error': str(e)}), 500
-
-def dict_factory(cursor, row):
-    """Convierte las filas de SQLite en diccionarios de Python"""
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
-
-@app.route('/api/buscar/<rut>', methods=['GET'])
-def buscar_por_rut(rut):
-    # Limpiar el RUT recibido (quitar puntos y guión)
-    rut_limpio = (
-        rut.upper().replace('.', '').replace('-', '').strip()
-    )
-
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = dict_factory
-    cursor = conn.cursor()
-
-    cursor.execute(
-        'SELECT * FROM encuestas WHERE rut = ? OR rut LIKE ?',
-        (rut_limpio, f'%{rut_limpio}%'),
-    )
-    resultado = cursor.fetchone()
-    conn.close()
-
-    if not resultado:
-        return jsonify({'mensaje': 'Vecino no encontrado'}), 404
-
-    # Convertir respuestas_json de texto a un objeto JSON/Diccionario
-    if resultado.get('respuestas_json'):
-        try:
-            resultado['respuestas_json'] = json.loads(
-                resultado['respuestas_json']
-            )
-        except Exception:
-            resultado['respuestas_json'] = {}
-
-    return jsonify(resultado), 200
 
 # ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':
