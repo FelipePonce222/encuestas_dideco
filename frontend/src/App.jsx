@@ -68,7 +68,7 @@ export default function App() {
         />
 
         {/* Cualquier otra ruta desconocida redirige a Login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );

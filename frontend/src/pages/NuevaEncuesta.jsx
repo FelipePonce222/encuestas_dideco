@@ -105,6 +105,7 @@ export default function NuevaEncuesta() {
   });
 
   const [mensajeEnvio, setMensajeEnvio] = useState('');
+  const [rutError, setRutError] = useState('');
 
   // 🚀 Cargar automáticamente el encuestador activo desde localStorage
   useEffect(() => {
@@ -123,8 +124,12 @@ export default function NuevaEncuesta() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'pm_rut') setRutError('');
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  
+  
 
   const handleCheckboxGroup = (category, value) => {
     setFormData(prev => {

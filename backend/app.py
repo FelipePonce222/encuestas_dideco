@@ -9,6 +9,7 @@ from flask_cors import CORS
 from IVPM_calculator import calcular_ivpm_registro
 from database import get_connection, init_db   # ← ÚNICA fuente de la base de datos
 from importador import importar_dataframe
+from rut_utils import SIN_RUT, normalizar_rut, validar_rut
 
 app = Flask(__name__)
 CORS(app)
@@ -20,8 +21,8 @@ init_db()
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json or {}
-    rut = data.get('rut', '').strip()
-    password = data.get('password', '').strip()
+    rut = normalizar_rut(data.get('rut') or '')   # acepta 12.345.678-5, 123456785, etc.
+    password = (data.get('password') or '').strip()
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -67,6 +68,8 @@ def importar_excel():
 @app.route('/api/vecino/<rut>', methods=['GET'])
 def buscar_vecino(rut):
     try:
+        rut = normalizar_rut(rut)   # 12.345.678-5 / 12345678-k -> formato único del sistema
+
         conn = get_connection()
         cursor = conn.cursor()
         
@@ -105,6 +108,16 @@ def guardar_encuesta():
         print("\n--- DATOS RECIBIDOS EN FLASK ---")
         print(data)
 
+        # RUT: opcional, pero si viene debe ser válido. Se guarda en formato único.
+        rut_ingresado = str(data.get('pm_rut') or '').strip()
+        if not rut_ingresado or rut_ingresado.upper() == SIN_RUT:
+            rut = SIN_RUT
+        else:
+            rut = normalizar_rut(rut_ingresado)
+            if not validar_rut(rut):
+                return jsonify({'error': 'RUT inválido: revisa el número y el dígito verificador.'}), 400
+        data['pm_rut'] = rut   # el JSON de respaldo también queda normalizado
+
         # Generar timestamp local si no viene en los datos
         fecha_registro = data.get('fecha_registro') or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -118,7 +131,6 @@ def guardar_encuesta():
         conn = get_connection()
         cursor = conn.cursor()
 
-        rut = data.get('pm_rut') or 'SIN RUT'
         nombre = data.get('pm_nombre') or 'SIN NOMBRE'
         
         edad_val = data.get('edad')

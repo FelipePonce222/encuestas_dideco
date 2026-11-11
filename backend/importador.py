@@ -17,7 +17,9 @@ import sys
 import pandas as pd
 
 from IVPM_calculator import calcular_ivpm_registro
-from database import DB_PATH, get_connection, init_db
+import database
+from database import get_connection, init_db
+from rut_utils import SIN_RUT, normalizar_rut
 
 COL_RUT = '2) Rut de la persona mayor:'
 COL_NOMBRE = '1) Nombre Completo de la persona mayor:'
@@ -55,13 +57,15 @@ def importar_dataframe(df, franja="Franja 1"):
     insertados = duplicados = omitidos = 0
 
     for _, row in df.iterrows():
-        rut = _texto(row.get(COL_RUT))
+        rut = normalizar_rut(_texto(row.get(COL_RUT)))
         nombre = _texto(row.get(COL_NOMBRE))
 
         # Fila vacía: no aporta nada
         if not rut and not nombre:
             omitidos += 1
             continue
+
+        rut = rut or SIN_RUT
 
         fecha = _texto(row.get(COL_FECHA)) or None
 
@@ -111,7 +115,7 @@ def main():
     args = parser.parse_args()
 
     init_db()
-    print(f"Base de datos: {DB_PATH}")
+    print(f"Base de datos: {database.DB_PATH}")
 
     for ruta in args.archivos:
         if not os.path.exists(ruta):

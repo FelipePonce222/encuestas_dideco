@@ -33,7 +33,7 @@ Sistema web e intramunicipal de gestión, monitoreo y análisis de encuestas par
 
 ## 📦 Requisitos Previos e Instalación
 
-Asegúrate de tener instalado en tu sistema:
+Para el correcto funcionamiento del sistema se necesita:
 * [Node.js](https://nodejs.org/) (v16 o superior)
 * [Python](https://www.python.org/) (v3.9 o superior)
 

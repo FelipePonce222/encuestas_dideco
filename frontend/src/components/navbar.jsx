@@ -6,7 +6,6 @@ import {
   FaTimes, 
   FaFileAlt, 
   FaSearch, 
-  FaMapMarkedAlt, 
   FaBuilding, 
   FaSignOutAlt 
 } from 'react-icons/fa';
@@ -71,9 +70,6 @@ export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aq
           </button>
           <button className="navbar-menu-item" onClick={() => handleNavigation('/busqueda-rut')}>
             <FaSearch /> Búsqueda por RUT
-          </button>
-          <button className="navbar-menu-item" onClick={() => handleNavigation('/busqueda-franja')}>
-            <FaMapMarkedAlt /> Búsqueda por Franja
           </button>
           <button 
             className="navbar-menu-item" 
