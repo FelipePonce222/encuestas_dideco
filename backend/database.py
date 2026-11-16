@@ -1,6 +1,8 @@
 import os
 import sqlite3
 
+from seguridad import es_hash, hashear_password
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ---------------------------------------------------------------------------
@@ -71,20 +73,18 @@ def init_db():
     # Índice para que la búsqueda por RUT sea rápida
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_vecinos_rut ON vecinos(rut)")
 
-    # Usuarios de prueba (se reemplazarán en la etapa de seguridad)
-    usuarios_prueba = [
-        ('12345678-9', 'José Martínez', 'Trabajador Social', 'admin123'),
-        ('21555499-6', 'Felipe Ponce', 'Ingeniero Informático', 'contraprueba'),
-        ('98765432-1', 'Camila Silva', 'Coordinadora DIDECO', 'dideco2026')
-    ]
+    # Seguridad: toda contraseña guardada en texto plano se convierte a hash (se hace una sola vez).
+    pendientes = []
+    for fila in cursor.execute("SELECT id_funcionario, password FROM funcionario").fetchall():
+        if fila["password"] and not es_hash(fila["password"]):
+            pendientes.append((hashear_password(fila["password"]), fila["id_funcionario"]))
+    if pendientes:
+        cursor.executemany("UPDATE funcionario SET password = ? WHERE id_funcionario = ?", pendientes)
+        print(f"[Seguridad] {len(pendientes)} contrasena(s) guardadas en texto plano fueron convertidas a hash.")
 
-    for rut, nombre, cargo, password in usuarios_prueba:
-        cursor.execute("SELECT 1 FROM funcionario WHERE rut = ?", (rut,))
-        if not cursor.fetchone():
-            cursor.execute('''
-                INSERT INTO funcionario (rut, nombre, cargo, password)
-                VALUES (?, ?, ?, ?)
-            ''', (rut, nombre, cargo, password))
+    total = cursor.execute("SELECT COUNT(*) FROM funcionario").fetchone()[0]
+    if total == 0:
+        print("[Aviso] No hay funcionarios registrados. Crea el primero con: python backend/crear_usuario.py")
 
     conn.commit()
     conn.close()

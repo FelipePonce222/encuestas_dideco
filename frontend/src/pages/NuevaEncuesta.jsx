@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { normalizarRut, validarRut } from '../utils/rut';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
@@ -128,8 +129,14 @@ export default function NuevaEncuesta() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  
-  
+  // Al salir del campo RUT: lo deja en formato único y avisa si el dígito verificador no calza
+  const handleRutBlur = () => {
+    const valor = formData.pm_rut.trim();
+    if (!valor) { setRutError(''); return; }
+    const normalizado = normalizarRut(valor);
+    setFormData(prev => ({ ...prev, pm_rut: normalizado }));
+    setRutError(validarRut(normalizado) ? '' : 'RUT inválido: revisa el número y el dígito verificador.');
+  };
 
   const handleCheckboxGroup = (category, value) => {
     setFormData(prev => {
@@ -146,6 +153,15 @@ export default function NuevaEncuesta() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // RUT: es opcional, pero si se ingresa debe ser válido
+    const rutIngresado = formData.pm_rut.trim();
+    if (rutIngresado && !validarRut(rutIngresado)) {
+      setRutError('RUT inválido: revisa el número y el dígito verificador.');
+      setMensajeEnvio('⚠️ Corrige el RUT antes de guardar la encuesta.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const ahora = new Date();
     const fechaHoraFormateada = ahora.toLocaleString('es-CL', {
       year: 'numeric',
@@ -158,6 +174,7 @@ export default function NuevaEncuesta() {
 
     const payload = {
       ...formData,
+      pm_rut: rutIngresado ? normalizarRut(rutIngresado) : '',
       fecha_registro: fechaHoraFormateada
     };
 
@@ -172,7 +189,9 @@ export default function NuevaEncuesta() {
         setMensajeEnvio(`✅ Encuesta guardada exitosamente (${fechaHoraFormateada}).`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        setMensajeEnvio('⚠️ Ocurrió un problema al guardar la encuesta.');
+        const detalle = await response.json().catch(() => ({}));
+        setMensajeEnvio(`⚠️ ${detalle.error || 'Ocurrió un problema al guardar la encuesta.'}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
       setMensajeEnvio('❌ Error de conexión con el servidor Flask.');
@@ -346,7 +365,15 @@ export default function NuevaEncuesta() {
                     </div>
                     <div className="form-group">
                       <label>2) RUT de la persona mayor:</label>
-                      <input type="text" name="pm_rut" placeholder="12345678-K" value={formData.pm_rut} onChange={handleChange} />
+                      <input 
+                        type="text" 
+                        name="pm_rut" 
+                        placeholder="12345678-K" 
+                        value={formData.pm_rut} 
+                        onChange={handleChange} 
+                        onBlur={handleRutBlur} 
+                      />
+                      {rutError && <small style={{ color: '#e53e3e', display: 'block', marginTop: '4px' }}>{rutError}</small>}
                     </div>
                     <div className="form-group">
                       <label>3) Teléfono de la persona mayor:</label>

@@ -19,6 +19,7 @@ import pandas as pd
 from IVPM_calculator import calcular_ivpm_registro
 import database
 from database import get_connection, init_db
+from fechas import a_iso
 from rut_utils import SIN_RUT, normalizar_rut
 
 COL_RUT = '2) Rut de la persona mayor:'
@@ -67,7 +68,8 @@ def importar_dataframe(df, franja="Franja 1"):
 
         rut = rut or SIN_RUT
 
-        fecha = _texto(row.get(COL_FECHA)) or None
+        fecha_texto = _texto(row.get(COL_FECHA))
+        fecha = a_iso(fecha_texto) or fecha_texto or None   # ISO; si no se reconoce, se conserva el texto
 
         # Evitar duplicados al reimportar el mismo archivo
         if fecha:

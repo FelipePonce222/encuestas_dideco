@@ -1,6 +1,5 @@
 import io
 import json
-from datetime import datetime
 
 import pandas as pd
 from flask import Flask, request, jsonify, send_file
@@ -10,9 +9,13 @@ from IVPM_calculator import calcular_ivpm_registro
 from database import get_connection, init_db   # ← ÚNICA fuente de la base de datos
 from importador import importar_dataframe
 from rut_utils import SIN_RUT, normalizar_rut, validar_rut
+from fechas import ahora_iso
+from auth import emitir_token, proteger_api, segundos_de_sesion
+from seguridad import HASH_FALSO, verificar_password
 
 app = Flask(__name__)
 CORS(app)
+proteger_api(app)   # TODAS las rutas /api/ exigen sesión (token), salvo /api/login
 
 # Crea las tablas (funcionario / vecinos) en la base única si no existen
 init_db()
@@ -25,16 +28,20 @@ def login():
     password = (data.get('password') or '').strip()
 
     conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT * FROM funcionario WHERE rut = ? AND password = ?", (rut, password))
-    user = cursor.fetchone()
+    user = conn.execute("SELECT * FROM funcionario WHERE rut = ?", (rut,)).fetchone()
     conn.close()
 
-    if user:
+    # Siempre se verifica un hash (aunque el RUT no exista) para que el tiempo de respuesta
+    # no revele qué RUT están registrados. Las contraseñas se guardan con hash, nunca en texto plano.
+    hash_guardado = user["password"] if user else HASH_FALSO
+    clave_correcta = verificar_password(hash_guardado, password)
+
+    if user and clave_correcta:
         return jsonify({
             "status": "success",
             "message": "Bienvenido/a al sistema",
+            "token": emitir_token(user),           # el front lo envía en cada petición
+            "expira_en": segundos_de_sesion(),     # segundos de duración de la sesión
             "user": {
                 "id": user["id_funcionario"],
                 "rut": user["rut"],
@@ -70,17 +77,26 @@ def buscar_vecino(rut):
     try:
         rut = normalizar_rut(rut)   # 12.345.678-5 / 12345678-k -> formato único del sistema
 
+        # 'SIN RUT' lo comparten muchas personas: no se puede buscar por ese valor
+        if not rut or rut == SIN_RUT:
+            return jsonify({'message': 'Vecino no encontrado'}), 404
+
         conn = get_connection()
         cursor = conn.cursor()
-        
-        cursor.execute("SELECT * FROM vecinos WHERE rut = ?", (rut,))
+
+        # Si el mismo RUT tiene varias encuestas, se entrega la ÚLTIMA registrada en el sistema
+        # (id más alto). Ordenar por id es más confiable que por fecha_registro, que en datos
+        # antiguos viene en formatos distintos.
+        cursor.execute("SELECT * FROM vecinos WHERE rut = ? ORDER BY id DESC LIMIT 1", (rut,))
         vecino = cursor.fetchone()
+        total = cursor.execute("SELECT COUNT(*) FROM vecinos WHERE rut = ?", (rut,)).fetchone()[0]
         conn.close()
 
         if not vecino:
             return jsonify({'message': 'Vecino no encontrado'}), 404
 
         vecino_dict = dict(vecino)
+        vecino_dict['total_encuestas_rut'] = total   # cuántas encuestas tiene este RUT en total
 
         if vecino_dict.get('datos_completos'):
             try:
@@ -118,8 +134,9 @@ def guardar_encuesta():
                 return jsonify({'error': 'RUT inválido: revisa el número y el dígito verificador.'}), 400
         data['pm_rut'] = rut   # el JSON de respaldo también queda normalizado
 
-        # Generar timestamp local si no viene en los datos
-        fecha_registro = data.get('fecha_registro') or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # La fecha la pone SIEMPRE el servidor (hora de Chile, formato ISO). Se ignora la que
+        # venga del navegador: el reloj de cada equipo puede estar mal y su formato no ordena.
+        fecha_registro = ahora_iso()
 
         score = 0
         nivel = 'Sin evaluar'
@@ -317,6 +334,6 @@ def obtener_encuestas_recientes():
         print(f"❌ Error al obtener encuestas recientes: {e}")
         return jsonify({'error': str(e)}), 500
 
-# ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
+#El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
