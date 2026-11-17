@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
+import { apiFetch } from '../api';
 import './dashboard.css';
 import heroBg from '../assets/hero-bg.png';
 
@@ -33,7 +34,7 @@ export default function Dashboard() {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/dashboard/stats')
+    apiFetch('http://localhost:5000/api/dashboard/stats')
       .then((res) => {
         if (!res.ok) throw new Error('Error en la respuesta del servidor');
         return res.json();

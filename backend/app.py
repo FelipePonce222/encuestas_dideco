@@ -11,11 +11,13 @@ from importador import importar_dataframe
 from rut_utils import SIN_RUT, normalizar_rut, validar_rut
 from fechas import ahora_iso
 from auth import emitir_token, proteger_api, segundos_de_sesion
+from perfil import perfil_bp
 from seguridad import HASH_FALSO, verificar_password
 
 app = Flask(__name__)
 CORS(app)
 proteger_api(app)   # TODAS las rutas /api/ exigen sesión (token), salvo /api/login
+app.register_blueprint(perfil_bp)   # Mi Perfil (también protegido por el token)
 
 # Crea las tablas (funcionario / vecinos) en la base única si no existen
 init_db()
@@ -334,6 +336,6 @@ def obtener_encuestas_recientes():
         print(f"❌ Error al obtener encuestas recientes: {e}")
         return jsonify({'error': str(e)}), 500
 
-#El servidor SIEMPRE debe arrancarse al final de todo el archivo
+# ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

@@ -45,6 +45,13 @@ def init_db():
         )
     ''')
 
+    # Datos de contacto del funcionario (Mi Perfil). Migración suave si la base ya existía.
+    for columna in ("email", "telefono"):
+        try:
+            cursor.execute(f"ALTER TABLE funcionario ADD COLUMN {columna} TEXT")
+        except sqlite3.OperationalError:
+            pass  # la columna ya existe
+
     # 2. Tabla Vecinos
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS vecinos (

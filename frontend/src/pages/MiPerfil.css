@@ -134,3 +134,41 @@
   text-align: center;
   font-weight: 500;
 }
+
+.alert-error {
+  background-color: #fed7d7;
+  color: #742a2a;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.perfil-error-campo {
+  color: #e53e3e;
+  font-size: 0.85rem;
+}
+
+.perfil-seccion {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #edf2f7;
+}
+
+.perfil-seccion h3 {
+  margin: 0 0 0.25rem 0;
+  color: #2d3748;
+  font-size: 1.15rem;
+}
+
+.perfil-seccion .ayuda {
+  margin: 0 0 1.25rem 0;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.btn-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

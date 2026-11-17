@@ -3,6 +3,7 @@ import { normalizarRut, validarRut } from '../utils/rut';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
+import { apiFetch } from '../api';
 import './NuevaEncuesta.css';
 
 export default function NuevaEncuesta() {
@@ -179,7 +180,7 @@ export default function NuevaEncuesta() {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/encuestas', {
+      const response = await apiFetch('http://localhost:5000/api/encuestas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

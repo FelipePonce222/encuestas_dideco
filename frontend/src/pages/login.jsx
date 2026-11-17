@@ -22,9 +22,14 @@ export default function Login() {
       });
 
       const data = await response.json();
-
       if (response.ok && data.status === 'success') {
         localStorage.setItem('usuario', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        if (data.expira_en) {
+          localStorage.setItem('token_expira', String(Date.now() + data.expira_en * 1000));
+        }
         navigate('/dashboard');
       } else {
         setErrorMsg(data.message || 'Error en las credenciales.');

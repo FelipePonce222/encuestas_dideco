@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
+import { apiFetch } from '../api';
 import './BusquedaRut.css';
 
 export default function BusquedaRut() {
@@ -22,8 +23,12 @@ export default function BusquedaRut() {
     setMostrarDetalle(false);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/vecino/${rutBusqueda.trim()}`);
+      const response = await apiFetch(`http://localhost:5000/api/vecino/${rutBusqueda.trim()}`);
       
+      if (response.status === 401) {
+        throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+      }
+
       if (!response.ok) {
         throw new Error('Vecino no encontrado en los registros.');
       }
