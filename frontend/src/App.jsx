@@ -8,6 +8,7 @@ import GenerarInforme from './pages/GenerarInforme';
 import NuevaEncuesta from './pages/NuevaEncuesta';
 import MiPerfil from './pages/MiPerfil';
 import ProtectedRoute from './components/ProtectedRoute';
+import PrioridadAlta from './pages/PrioridadAlta';
 
 export default function App() {
   return (
@@ -59,12 +60,21 @@ export default function App() {
           } 
         />
         <Route 
+          path="/prioridad-alta" 
+          element={
+            <ProtectedRoute>
+              <PrioridadAlta />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/mi-perfil" 
           element={
             <ProtectedRoute>
               <MiPerfil />
             </ProtectedRoute>
-          } 
+          }
+           
         />
 
         {/* Cualquier otra ruta desconocida redirige a Login */}

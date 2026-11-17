@@ -6,7 +6,7 @@ def resetear_tabla():
     cursor = conn.cursor()
     
     # Vacía la tabla de encuestas
-    cursor.execute("DELETE FROM encuestas;")
+    cursor.execute("DELETE FROM vecinos;")
     
     # Reinicia el contador autoincremental del ID
     cursor.execute("DELETE FROM sqlite_sequence WHERE name='encuestas';")

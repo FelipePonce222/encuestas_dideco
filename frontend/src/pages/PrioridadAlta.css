@@ -1,0 +1,251 @@
+.prioridad-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f6f9;
+}
+
+.prioridad-main {
+  flex: 1;
+  max-width: 1150px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 30px 20px;
+  box-sizing: border-box;
+}
+
+.prioridad-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.prioridad-top-bar {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.prioridad-btn-volver {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+  background: #f8f9fa;
+  font-weight: bold;
+  color: #4a5568;
+  transition: background-color 0.15s ease;
+}
+
+.prioridad-btn-volver:hover {
+  background: #edf2f7;
+}
+
+.prioridad-header {
+  border-bottom: 2px solid #edf2f7;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.prioridad-header h2 {
+  margin: 0;
+  color: #2d3748;
+}
+
+.prioridad-header p {
+  margin: 6px 0 0 0;
+  color: #718096;
+}
+
+/* Tarjetas KPI */
+.prioridad-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.prioridad-kpi-item {
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 8px;
+  background: #f7fafc;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.prioridad-kpi-item:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-label {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.4px;
+}
+
+.kpi-number {
+  margin: 5px 0 0 0;
+  font-size: 24px;
+}
+
+.kpi-todos {
+  border-left: 4px solid #4a5568;
+}
+.kpi-todos .kpi-label { color: #4a5568; }
+.kpi-todos .kpi-number { color: #2d3748; }
+.kpi-todos.active { background: #edf2f7; }
+
+.kpi-critica {
+  border-left: 4px solid #e53e3e;
+}
+.kpi-critica .kpi-label,
+.kpi-critica .kpi-number { color: #e53e3e; }
+.kpi-critica.active { background: #fff5f5; }
+
+.kpi-alta {
+  border-left: 4px solid #dd6b20;
+}
+.kpi-alta .kpi-label,
+.kpi-alta .kpi-number { color: #dd6b20; }
+.kpi-alta.active { background: #fffaf0; }
+
+/* Filtros */
+.prioridad-filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.prioridad-input,
+.prioridad-select {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+  font-size: 14px;
+  background-color: #ffffff;
+  color: #2d3748;
+}
+
+.prioridad-input:focus,
+.prioridad-select:focus {
+  outline: none;
+  border-color: #319795;
+  box-shadow: 0 0 0 2px rgba(49, 151, 149, 0.18);
+}
+
+/* Mensajes y conteo */
+.prioridad-estado-msg {
+  text-align: center;
+  padding: 30px;
+  color: #718096;
+}
+
+.prioridad-error {
+  padding: 15px;
+  background: #fed7d7;
+  color: #9b2c2c;
+  border-radius: 8px;
+}
+
+.prioridad-conteo {
+  font-size: 13px;
+  color: #718096;
+  margin-bottom: 10px;
+}
+
+/* Tabla */
+.prioridad-tabla-wrapper {
+  overflow-x: auto;
+}
+
+.prioridad-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.prioridad-tabla thead tr {
+  background-color: #edf2f7;
+  color: #2d3748;
+  text-align: left;
+}
+
+.prioridad-tabla th,
+.prioridad-tabla td {
+  padding: 12px;
+}
+
+.prioridad-tabla tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.12s ease;
+}
+
+.prioridad-tabla tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.th-centro,
+.td-accion {
+  text-align: center;
+}
+
+.prioridad-sin-resultados {
+  text-align: center;
+  padding: 25px;
+  color: #718096;
+}
+
+.prioridad-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.badge-critica {
+  background-color: #e53e3e;
+}
+
+.badge-alta {
+  background-color: #dd6b20;
+}
+
+.td-ivpm {
+  font-weight: bold;
+  color: #2d3748;
+  white-space: nowrap;
+}
+
+.td-nombre {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.td-rut {
+  white-space: nowrap;
+}
+
+.prioridad-btn-ficha {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #319795;
+  color: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.prioridad-btn-ficha:hover:not(.disabled) {
+  background-color: #2c7a7b;
+}
+
+.prioridad-btn-ficha.disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+}

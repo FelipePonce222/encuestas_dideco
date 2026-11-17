@@ -336,6 +336,37 @@ def obtener_encuestas_recientes():
         print(f"❌ Error al obtener encuestas recientes: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/vecinos/prioritarios', methods=['GET'])
+def obtener_vecinos_prioritarios():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, rut, nombre, edad, direccion, unidad_vecinal, franja,
+                   hallazgo, ivpm_score, nivel_riesgo, fecha_registro
+            FROM vecinos
+            WHERE nivel_riesgo IN ('Vulnerabilidad Crítica', 'Vulnerabilidad Alta')
+            ORDER BY
+                CASE nivel_riesgo
+                    WHEN 'Vulnerabilidad Crítica' THEN 1
+                    WHEN 'Vulnerabilidad Alta' THEN 2
+                    ELSE 3
+                END,
+                ivpm_score DESC,
+                nombre ASC
+        """)
+        filas = cursor.fetchall()
+        conn.close()
+
+        prioritarios = [dict(fila) for fila in filas]
+        return jsonify(prioritarios), 200
+
+    except Exception as e:
+        print(f"❌ Error al obtener vecinos prioritarios: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

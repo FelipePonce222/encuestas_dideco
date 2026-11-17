@@ -134,11 +134,37 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', borderLeft: '5px solid #e53e3e', textAlign: 'left' }}>
-            <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: 'bold', letterSpacing: '0.5px' }}>PRIORIDAD ALTA / CRÍTICA</span>
-            <h2 style={{ fontSize: '30px', margin: '8px 0 0 0', color: '#e53e3e' }}>
+          <div
+            onClick={() => navigate('/prioridad-alta')}
+            title="Haz clic para ver el listado de casos con Prioridad Alta y Crítica"
+            style={{
+              background: '#ffffff',
+              padding: '20px',
+              borderRadius: '10px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+              borderLeft: '5px solid #e53e3e',
+              textAlign: 'left',
+              cursor: 'pointer',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px)';
+              e.currentTarget.style.boxShadow = '0 8px 18px rgba(229, 62, 62, 0.18)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
+            }}
+          >
+            <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: 'bold', letterSpacing: '0.5px' }}>
+              PRIORIDAD ALTA / CRÍTICA
+            </span>
+            <h2 style={{ fontSize: '30px', margin: '8px 0 4px 0', color: '#e53e3e' }}>
               {cargando ? '...' : ((stats?.niveles_riesgo?.['Vulnerabilidad Crítica'] || 0) + (stats?.niveles_riesgo?.['Vulnerabilidad Alta'] || 0))}
             </h2>
+            <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: '600' }}>
+              Ver listado →
+            </span>
           </div>
 
           <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', borderLeft: '5px solid #d69e2e', textAlign: 'left' }}>
