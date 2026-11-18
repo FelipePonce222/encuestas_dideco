@@ -7,7 +7,7 @@
 
 .prioridad-main {
   flex: 1;
-  max-width: 1150px;
+  max-width: 1240px;
   width: 100%;
   margin: 0 auto;
   padding: 30px 20px;
@@ -19,6 +19,7 @@
   border-radius: 12px;
   padding: 25px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
 }
 
 .prioridad-top-bar {
@@ -113,13 +114,15 @@
 /* Filtros */
 .prioridad-filtros-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
   margin-bottom: 20px;
 }
 
 .prioridad-input,
 .prioridad-select {
+  width: 100%;
+  box-sizing: border-box;
   padding: 10px 12px;
   border-radius: 6px;
   border: 1px solid #cbd5e0;
@@ -157,13 +160,15 @@
 
 /* Tabla */
 .prioridad-tabla-wrapper {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .prioridad-tabla {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13.5px;
 }
 
 .prioridad-tabla thead tr {
@@ -174,7 +179,12 @@
 
 .prioridad-tabla th,
 .prioridad-tabla td {
-  padding: 12px;
+  padding: 11px 10px;
+  vertical-align: middle;
+}
+
+.prioridad-tabla th {
+  white-space: nowrap;
 }
 
 .prioridad-tabla tbody tr {
@@ -189,6 +199,7 @@
 .th-centro,
 .td-accion {
   text-align: center;
+  white-space: nowrap;
 }
 
 .prioridad-sin-resultados {
@@ -204,6 +215,7 @@
   font-size: 12px;
   font-weight: bold;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 .badge-critica {
@@ -223,13 +235,25 @@
 .td-nombre {
   font-weight: 600;
   color: #2d3748;
+  min-width: 165px;
 }
 
 .td-rut {
+  width: 115px;
+  max-width: 125px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Edad y Franja en una sola línea */
+.prioridad-tabla td:nth-child(5),
+.prioridad-tabla td:nth-child(7) {
   white-space: nowrap;
 }
 
 .prioridad-btn-ficha {
+  display: inline-block;
   padding: 6px 12px;
   border-radius: 6px;
   border: none;
@@ -238,6 +262,7 @@
   font-weight: bold;
   cursor: pointer;
   font-size: 12px;
+  white-space: nowrap;
   transition: background-color 0.15s ease;
 }
 
@@ -305,6 +330,7 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
   margin: auto;
   text-align: left;
+  box-sizing: border-box;
 }
 
 .ficha-modal-top {
@@ -368,6 +394,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   background-color: #ebf8ff;
   border: 1px solid #bee3f8;
   border-radius: 8px;
@@ -444,4 +472,33 @@
 .ficha-btn-pdf:hover {
   background-color: #c53030;
   transform: translateY(-1px);
+}
+
+/* =========================================================
+   RESPONSIVE MÓVIL / TABLET
+   ========================================================= */
+@media (max-width: 768px) {
+  .prioridad-main {
+    padding: 18px 12px;
+  }
+
+  .prioridad-card {
+    padding: 16px;
+  }
+
+  .prioridad-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .prioridad-filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ficha-modal-card {
+    padding: 18px 16px;
+  }
+
+  .ficha-resultado-grid {
+    grid-template-columns: 1fr;
+  }
 }
