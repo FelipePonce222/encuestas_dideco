@@ -62,8 +62,8 @@ export default function BusquedaRut() {
         <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
           Nueva Encuesta
         </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
-          Generar Informe
+        <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
+          Informes
         </button>
         <button 
           className="dashboard-action-btn" 

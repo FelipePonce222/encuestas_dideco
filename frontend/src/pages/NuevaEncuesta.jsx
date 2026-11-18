@@ -207,7 +207,7 @@ export default function NuevaEncuesta() {
           Búsqueda por Rut
         </button>
         <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
-          Generar Informe
+          Informes
         </button>
         <button 
           className="dashboard-action-btn" 

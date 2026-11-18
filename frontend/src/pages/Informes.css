@@ -1,0 +1,398 @@
+/* Informes.css */
+
+.informe-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f7fafc;
+}
+
+.informe-main {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 30px 20px 50px;
+  flex: 1;
+}
+
+.informe-top-bar {
+  margin-bottom: 15px;
+}
+
+.informe-btn-volver {
+  background: #edf2f7;
+  color: #2d3748;
+  border: 1px solid #cbd5e0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.informe-btn-volver:hover {
+  background: #e2e8f0;
+}
+
+.informe-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.informe-header h1 {
+  color: #2d3748;
+  font-size: 1.9rem;
+  margin-bottom: 8px;
+}
+
+.informe-header p {
+  color: #718096;
+  font-size: 1rem;
+}
+
+/* Alertas de Estado */
+.informe-alert {
+  padding: 14px 18px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.informe-alert.exito {
+  background-color: #c6f6d5;
+  color: #22543d;
+  border: 1px solid #9ae6b4;
+}
+
+.informe-alert.error {
+  background-color: #fed7d7;
+  color: #9b2c2c;
+  border: 1px solid #feb2b2;
+}
+
+/* Tarjetas del Repositorio */
+.informe-repo-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 26px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  margin-bottom: 28px;
+  border-top: 5px solid #2b6cb0;
+}
+
+.informe-repo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.informe-repo-header h3,
+.informe-list-header h3 {
+  color: #2d3748;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.informe-repo-badge {
+  background: #ebf8ff;
+  color: #2b6cb0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Formulario de Subida */
+.informe-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.informe-form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .informe-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.informe-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.informe-field label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #4a5568;
+}
+
+.informe-field input[type="text"],
+.informe-field select,
+.informe-file-input {
+  padding: 10px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background-color: #fff;
+}
+
+.informe-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-subir-informe {
+  background-color: #2b6cb0;
+  color: #ffffff;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-subir-informe:hover:not(:disabled) {
+  background-color: #2c5282;
+}
+
+.btn-subir-informe:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Filtros y Tabla */
+.informe-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.informe-filtros {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.informe-search-input,
+.informe-select-filtro {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.informe-search-input {
+  min-width: 240px;
+}
+
+.informe-empty-msg {
+  text-align: center;
+  color: #718096;
+  padding: 24px 10px;
+}
+
+.informe-tabla-wrapper {
+  overflow-x: auto;
+}
+
+.informe-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.informe-tabla th,
+.informe-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.informe-tabla th {
+  background-color: #edf2f7;
+  color: #2d3748;
+  font-weight: 700;
+}
+
+.th-centro {
+  text-align: center !important;
+}
+
+.badge-formato {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.badge-pdf {
+  background-color: #fed7d7;
+  color: #9b2c2c;
+}
+
+.badge-docx {
+  background-color: #bee3f8;
+  color: #2c5282;
+}
+
+.doc-titulo {
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.doc-descripcion {
+  font-size: 0.85rem;
+  color: #4a5568;
+  margin-top: 2px;
+}
+
+.doc-archivo-nombre {
+  font-size: 0.78rem;
+  color: #718096;
+  margin-top: 2px;
+}
+
+.td-acciones {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-doc-accion {
+  border: none;
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-doc-descargar {
+  background-color: #276749;
+  color: #ffffff;
+}
+
+.btn-doc-descargar:hover {
+  background-color: #1e4e37;
+}
+
+.btn-doc-eliminar {
+  background-color: #fed7d7;
+  color: #9b2c2c;
+}
+
+.btn-doc-eliminar:hover {
+  background-color: #feb2b2;
+}
+
+/* Sección Inferior: Herramientas de Exportación Rápida */
+.informe-subtitulo-seccion {
+  color: #2d3748;
+  margin: 10px 0 18px;
+  font-size: 1.25rem;
+}
+
+.informe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 26px;
+}
+
+.informe-card {
+  background: #ffffff;
+  padding: 26px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.informe-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.informe-card-excel {
+  border-top: 6px solid #276749;
+}
+
+.informe-card-pdf {
+  border-top: 6px solid #e53e3e;
+}
+
+.informe-card-icon {
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.informe-card h3 {
+  color: #2d3748;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.informe-card p {
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.informe-card code {
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.btn-informe {
+  margin-top: 22px;
+  padding: 12px 20px;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.btn-excel {
+  background-color: #276749;
+}
+
+.btn-excel:hover:not(:disabled) {
+  background-color: #1e4e37;
+}
+
+.btn-pdf {
+  background-color: #c53030;
+}
+
+.btn-pdf:hover {
+  background-color: #9b2c2c;
+}
+
+.btn-informe:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

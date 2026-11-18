@@ -4,7 +4,8 @@ import json
 import pandas as pd
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-
+import os
+import uuid
 from IVPM_calculator import calcular_ivpm_registro
 from database import get_connection, init_db   # ← ÚNICA fuente de la base de datos
 from importador import importar_dataframe
@@ -21,7 +22,155 @@ app.register_blueprint(perfil_bp)   # Mi Perfil (también protegido por el token
 
 # Crea las tablas (funcionario / vecinos) en la base única si no existen
 init_db()
+# ---------------------------------------------------------------------------
+# MÓDULO DE GESTIÓN DE INFORMES (.pdf y .docx)
+# ---------------------------------------------------------------------------
+UPLOADS_INFORMES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads_informes")
+EXTENSIONES_INFORME_PERMITIDAS = {".pdf", ".docx"}
 
+
+def init_informes_db():
+    os.makedirs(UPLOADS_INFORMES_DIR, exist_ok=True)
+    conn = get_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS informes_documentos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo TEXT NOT NULL,
+            descripcion TEXT,
+            franja TEXT DEFAULT 'General',
+            nombre_archivo_original TEXT NOT NULL,
+            nombre_archivo_guardado TEXT NOT NULL,
+            extension TEXT NOT NULL,
+            tamano_bytes INTEGER DEFAULT 0,
+            subido_por TEXT,
+            fecha_subida TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+init_informes_db()
+
+
+@app.route('/api/informes', methods=['GET'])
+def listar_informes():
+    try:
+        conn = get_connection()
+        filas = conn.execute(
+            "SELECT * FROM informes_documentos ORDER BY id DESC"
+        ).fetchall()
+        conn.close()
+        return jsonify([dict(f) for f in filas]), 200
+    except Exception as e:
+        print(f"❌ Error al listar informes: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/informes', methods=['POST'])
+def subir_informe():
+    if 'file' not in request.files:
+        return jsonify({'error': 'Debes seleccionar un archivo .pdf o .docx.'}), 400
+
+    archivo = request.files['file']
+    if not archivo or not archivo.filename:
+        return jsonify({'error': 'Nombre de archivo inválido.'}), 400
+
+    nombre_original = archivo.filename.strip()
+    _, ext = os.path.splitext(nombre_original)
+    ext = ext.lower()
+
+    if ext not in EXTENSIONES_INFORME_PERMITIDAS:
+        return jsonify({'error': 'Formato no permitido. Solo se aceptan archivos .pdf y .docx.'}), 400
+
+    titulo = (request.form.get('titulo') or '').strip() or os.path.splitext(nombre_original)[0]
+    descripcion = (request.form.get('descripcion') or '').strip()
+    franja = (request.form.get('franja') or 'General').strip()
+    subido_por = (request.form.get('subido_por') or 'Funcionario DIDECO').strip()
+
+    nombre_guardado = f"{uuid.uuid4().hex}{ext}"
+    ruta_destino = os.path.join(UPLOADS_INFORMES_DIR, nombre_guardado)
+
+    try:
+        os.makedirs(UPLOADS_INFORMES_DIR, exist_ok=True)
+        archivo.save(ruta_destino)
+        tamano = os.path.getsize(ruta_destino)
+        fecha_subida = ahora_iso()
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO informes_documentos (
+                titulo, descripcion, franja, nombre_archivo_original,
+                nombre_archivo_guardado, extension, tamano_bytes, subido_por, fecha_subida
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            titulo, descripcion, franja, nombre_original,
+            nombre_guardado, ext.lstrip('.'), tamano, subido_por, fecha_subida
+        ))
+        nuevo_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            'message': 'Informe subido correctamente.',
+            'id': nuevo_id
+        }), 201
+    except Exception as e:
+        print(f"❌ Error al subir informe: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/informes/<int:informe_id>/descargar', methods=['GET'])
+def descargar_informe(informe_id):
+    try:
+        conn = get_connection()
+        doc = conn.execute(
+            "SELECT * FROM informes_documentos WHERE id = ?", (informe_id,)
+        ).fetchone()
+        conn.close()
+
+        if not doc:
+            return jsonify({'error': 'Informe no encontrado.'}), 404
+
+        ruta_archivo = os.path.join(UPLOADS_INFORMES_DIR, doc['nombre_archivo_guardado'])
+        if not os.path.exists(ruta_archivo):
+            return jsonify({'error': 'El archivo físico no existe en el servidor.'}), 404
+
+        return send_file(
+            ruta_archivo,
+            as_attachment=True,
+            download_name=doc['nombre_archivo_original']
+        )
+    except Exception as e:
+        print(f"❌ Error al descargar informe: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/informes/<int:informe_id>', methods=['DELETE'])
+def eliminar_informe(informe_id):
+    try:
+        conn = get_connection()
+        doc = conn.execute(
+            "SELECT * FROM informes_documentos WHERE id = ?", (informe_id,)
+        ).fetchone()
+
+        if not doc:
+            conn.close()
+            return jsonify({'error': 'Informe no encontrado.'}), 404
+
+        ruta_archivo = os.path.join(UPLOADS_INFORMES_DIR, doc['nombre_archivo_guardado'])
+        if os.path.exists(ruta_archivo):
+            os.remove(ruta_archivo)
+
+        conn.execute("DELETE FROM informes_documentos WHERE id = ?", (informe_id,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({'message': 'Informe eliminado correctamente.'}), 200
+    except Exception as e:
+        print(f"❌ Error al eliminar informe: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():

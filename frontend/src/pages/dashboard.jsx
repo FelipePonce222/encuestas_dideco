@@ -107,8 +107,8 @@ export default function Dashboard() {
         <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
           Búsqueda por Rut
         </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
-          Generar Informe
+        <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
+          Informes
         </button>
         <button
           className="dashboard-action-btn"
