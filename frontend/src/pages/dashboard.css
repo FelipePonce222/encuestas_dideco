@@ -52,7 +52,132 @@
 }
 
 .dashboard-main {
-  padding: 2rem 1.5rem;
-  max-width: 1200px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.dashboard-section-title {
+  color: #2d3748;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+}
+
+/* TARJETAS KPI */
+.dashboard-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.kpi-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  text-align: left;
+}
+
+.kpi-card-clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card-clickable:hover {
+  transform: translateY(-3px);
+}
+
+.kpi-card-label {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.kpi-card-value {
+  font-size: 30px;
+  margin: 8px 0 4px 0;
+  color: #2d3748;
+}
+
+.kpi-card-link {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Variantes por nivel */
+.kpi-card-total {
+  border-left: 5px solid #319795;
+}
+.kpi-card-total .kpi-card-label {
+  color: #718096;
+}
+.kpi-card-total .kpi-card-value {
+  margin-bottom: 0;
+}
+
+.kpi-card-critica {
+  border-left: 5px solid #e53e3e;
+}
+.kpi-card-critica .kpi-card-label,
+.kpi-card-critica .kpi-card-value,
+.kpi-card-critica .kpi-card-link {
+  color: #e53e3e;
+}
+.kpi-card-critica:hover {
+  box-shadow: 0 8px 18px rgba(229, 62, 62, 0.18);
+}
+
+.kpi-card-moderada {
+  border-left: 5px solid #d69e2e;
+}
+.kpi-card-moderada .kpi-card-label {
+  color: #d69e2e;
+}
+.kpi-card-moderada .kpi-card-link {
+  color: #b7791f;
+}
+.kpi-card-moderada:hover {
+  box-shadow: 0 8px 18px rgba(214, 158, 46, 0.22);
+}
+
+.kpi-card-baja {
+  border-left: 5px solid #38a169;
+}
+.kpi-card-baja .kpi-card-label {
+  color: #38a169;
+}
+.kpi-card-baja .kpi-card-link {
+  color: #2f855a;
+}
+.kpi-card-baja:hover {
+  box-shadow: 0 8px 18px rgba(56, 161, 105, 0.22);
+}
+
+/* GRÁFICOS */
+.dashboard-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.dashboard-chart-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-chart-title {
+  text-align: center;
+  color: #2d3748;
+  margin-bottom: 15px;
+}
+
+.dashboard-pie-wrapper {
+  width: 75%;
   margin: 0 auto;
 }

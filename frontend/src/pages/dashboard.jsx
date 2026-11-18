@@ -83,19 +83,23 @@ export default function Dashboard() {
     ]
   };
 
+  const totalPrioritarios =
+    (stats?.niveles_riesgo?.['Vulnerabilidad Crítica'] || 0) +
+    (stats?.niveles_riesgo?.['Vulnerabilidad Alta'] || 0);
+
   return (
     <div className="dashboard-container">
       <Navbar />
 
-      {/* HERO ORIGINAL */}
-      <div 
-        className="dashboard-hero" 
+      {/* HERO */}
+      <div
+        className="dashboard-hero"
         style={{ backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)), url(${heroBg})` }}
       >
         <h1 className="dashboard-hero-title">ENCUESTAS PERSONAS MAYORES</h1>
       </div>
 
-      {/* BARRA DE ACCIÓN ORIGINAL */}
+      {/* BARRA DE ACCIÓN */}
       <div className="dashboard-action-bar">
         <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
           Nueva Encuesta
@@ -106,8 +110,8 @@ export default function Dashboard() {
         <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
           Generar Informe
         </button>
-        <button 
-          className="dashboard-action-btn" 
+        <button
+          className="dashboard-action-btn"
           onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}
         >
           Municipalidad
@@ -115,21 +119,14 @@ export default function Dashboard() {
       </div>
 
       {/* CONTENIDO CENTRAL */}
-      <main className="dashboard-main" style={{ maxWidth: '1100px', margin: '0 auto', padding: '30px 20px' }}>
-        <h3 style={{ color: '#2d3748', textAlign: 'center', marginBottom: '20px', fontSize: '1.4rem' }}>
-          Panel de Control y Cobertura IVPM
-        </h3>
+      <main className="dashboard-main">
+        <h3 className="dashboard-section-title">Panel de Control y Cobertura IVPM</h3>
 
-        {/* TARJETAS KPI ORIGINALES */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '20px',
-          marginBottom: '40px'
-        }}>
-          <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', borderLeft: '5px solid #319795', textAlign: 'left' }}>
-            <span style={{ fontSize: '12px', color: '#718096', fontWeight: 'bold', letterSpacing: '0.5px' }}>TOTAL REGISTROS</span>
-            <h2 style={{ fontSize: '30px', margin: '8px 0 0 0', color: '#2d3748' }}>
+        {/* TARJETAS KPI */}
+        <div className="dashboard-kpi-grid">
+          <div className="kpi-card kpi-card-total">
+            <span className="kpi-card-label">TOTAL REGISTROS</span>
+            <h2 className="kpi-card-value">
               {cargando ? '...' : (stats?.total_encuestas || 0)}
             </h2>
           </div>
@@ -137,66 +134,56 @@ export default function Dashboard() {
           <div
             onClick={() => navigate('/prioridad-alta')}
             title="Haz clic para ver el listado de casos con Prioridad Alta y Crítica"
-            style={{
-              background: '#ffffff',
-              padding: '20px',
-              borderRadius: '10px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-              borderLeft: '5px solid #e53e3e',
-              textAlign: 'left',
-              cursor: 'pointer',
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px)';
-              e.currentTarget.style.boxShadow = '0 8px 18px rgba(229, 62, 62, 0.18)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
-            }}
+            className="kpi-card kpi-card-clickable kpi-card-critica"
           >
-            <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: 'bold', letterSpacing: '0.5px' }}>
-              PRIORIDAD ALTA / CRÍTICA
-            </span>
-            <h2 style={{ fontSize: '30px', margin: '8px 0 4px 0', color: '#e53e3e' }}>
-              {cargando ? '...' : ((stats?.niveles_riesgo?.['Vulnerabilidad Crítica'] || 0) + (stats?.niveles_riesgo?.['Vulnerabilidad Alta'] || 0))}
+            <span className="kpi-card-label">PRIORIDAD ALTA / CRÍTICA</span>
+            <h2 className="kpi-card-value">
+              {cargando ? '...' : totalPrioritarios}
             </h2>
-            <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: '600' }}>
-              Ver listado →
-            </span>
+            <span className="kpi-card-link">Ver listado →</span>
           </div>
 
-          <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', borderLeft: '5px solid #d69e2e', textAlign: 'left' }}>
-            <span style={{ fontSize: '12px', color: '#d69e2e', fontWeight: 'bold', letterSpacing: '0.5px' }}>VULNERABILIDAD MODERADA</span>
-            <h2 style={{ fontSize: '30px', margin: '8px 0 0 0', color: '#2d3748' }}>
+          <div
+            onClick={() => navigate('/vulnerabilidad-moderada')}
+            title="Haz clic para ver el listado de casos con Vulnerabilidad Moderada"
+            className="kpi-card kpi-card-clickable kpi-card-moderada"
+          >
+            <span className="kpi-card-label">VULNERABILIDAD MODERADA</span>
+            <h2 className="kpi-card-value">
               {cargando ? '...' : (stats?.niveles_riesgo?.['Vulnerabilidad Moderada'] || 0)}
             </h2>
+            <span className="kpi-card-link">Ver listado →</span>
           </div>
 
-          <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)', borderLeft: '5px solid #38a169', textAlign: 'left' }}>
-            <span style={{ fontSize: '12px', color: '#38a169', fontWeight: 'bold', letterSpacing: '0.5px' }}>VULNERABILIDAD BAJA</span>
-            <h2 style={{ fontSize: '30px', margin: '8px 0 0 0', color: '#2d3748' }}>
+          <div
+            onClick={() => navigate('/vulnerabilidad-baja')}
+            title="Haz clic para ver el listado de casos con Vulnerabilidad Baja"
+            className="kpi-card kpi-card-clickable kpi-card-baja"
+          >
+            <span className="kpi-card-label">VULNERABILIDAD BAJA</span>
+            <h2 className="kpi-card-value">
               {cargando ? '...' : (stats?.niveles_riesgo?.['Vulnerabilidad Baja'] || 0)}
             </h2>
+            <span className="kpi-card-link">Ver listado →</span>
           </div>
         </div>
 
-        {/* NUEVA SECCIÓN DE GRÁFICOS VISUALES */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
-          
-          <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
-            <h4 style={{ textAlign: 'center', color: '#2d3748', marginBottom: '15px' }}>Distribución Nivel IVPM</h4>
-            <div style={{ width: '75%', margin: '0 auto' }}>
+        {/* SECCIÓN DE GRÁFICOS VISUALES */}
+        <div className="dashboard-charts-grid">
+          <div className="dashboard-chart-card">
+            <h4 className="dashboard-chart-title">Distribución Nivel IVPM</h4>
+            <div className="dashboard-pie-wrapper">
               <Pie data={datosRiesgo} />
             </div>
           </div>
 
-          <div style={{ background: '#ffffff', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
-            <h4 style={{ textAlign: 'center', color: '#2d3748', marginBottom: '15px' }}>Estado de Visitas Territoriales</h4>
-            <Bar data={datosHallazgos} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+          <div className="dashboard-chart-card">
+            <h4 className="dashboard-chart-title">Estado de Visitas Territoriales</h4>
+            <Bar
+              data={datosHallazgos}
+              options={{ responsive: true, plugins: { legend: { display: false } } }}
+            />
           </div>
-
         </div>
       </main>
 

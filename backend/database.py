@@ -1,10 +1,3 @@
-import os
-import sqlite3
-
-from seguridad import es_hash, hashear_password
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
 # ---------------------------------------------------------------------------
 # ÚNICA base de datos del sistema.
 #
@@ -12,7 +5,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Se puede mover (servidor, exe, etc.) sin tocar el código definiendo la
 # variable de entorno DIDECO_DB_PATH con la ruta del archivo.
 # Toda la app (app.py, importador.py) obtiene la conexión desde get_connection().
-# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------import os
+import os
+import sqlite3
+from seguridad import es_hash, hashear_password
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DB_PATH = os.path.abspath(
     os.path.expanduser(
         os.environ.get("DIDECO_DB_PATH", os.path.join(BASE_DIR, "dideco_encuestas.db"))

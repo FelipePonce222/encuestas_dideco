@@ -203,14 +203,54 @@ def importar_dataframe(df, franja="Franja 1"):
 
 
 if __name__ == "__main__":
-    # Permite ejecutar: python backend/importador.py para cargar los .xlsx de una carpeta
-    carpeta = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    archivos = [
-        f for f in glob.glob(os.path.join(carpeta, "*.xlsx"))
-        if not os.path.basename(f).startswith("~$")
-    ]
-    for archivo in archivos:
-        print(f"📥 Importando {os.path.basename(archivo)}...")
-        df = pd.read_excel(archivo)
-        res = importar_dataframe(df, franja="Franja 1")
-        print(f"   Resultado: {res}")
+    import re
+    import sys
+
+    def detectar_franja(nombre_archivo, nombre_hoja=""):
+        for texto in (nombre_hoja, os.path.basename(nombre_archivo)):
+            match = re.search(r"franja[\s_-]*(\d+)", str(texto), re.IGNORECASE)
+            if match:
+                return f"Franja {match.group(1)}"
+        return "Franja 1"
+
+    base_backend = os.path.dirname(os.path.abspath(__file__))
+    raiz_proyecto = os.path.dirname(base_backend)
+
+    if len(sys.argv) > 1:
+        archivos = [sys.argv[1]]
+    else:
+        carpetas = [
+            os.path.join(base_backend, "bd"),
+            base_backend,
+            raiz_proyecto,
+        ]
+        archivos = []
+        for carpeta in carpetas:
+            if os.path.isdir(carpeta):
+                encontrados = [
+                    f for f in glob.glob(os.path.join(carpeta, "*.xlsx"))
+                    if not os.path.basename(f).startswith("~$")
+                ]
+                archivos.extend(encontrados)
+
+    if not archivos:
+        print("⚠️ No se encontró ningún archivo .xlsx para importar.")
+    else:
+        for archivo in sorted(archivos):
+            xls = pd.ExcelFile(archivo)
+            for hoja in xls.sheet_names:
+                df = pd.read_excel(archivo, sheet_name=hoja)
+
+                # Verifica que la hoja realmente tenga columnas de encuesta (y no sea una tabla resumen)
+                es_encuesta = any(
+                    str(col).strip().startswith(("1) Nombre", "5) Hallazgo", "Marca temporal", "1) Escribir dirección"))
+                    for col in df.columns
+                )
+                if not es_encuesta:
+                    print(f"⏭️ Saltando '{os.path.basename(archivo)}' (Hoja: {hoja}) -> No es hoja de encuestas")
+                    continue
+
+                franja_detectada = sys.argv[2] if len(sys.argv) > 2 else detectar_franja(archivo, hoja)
+                print(f"📥 Importando '{os.path.basename(archivo)}' (Hoja: {hoja}) -> Asignado a: {franja_detectada}")
+                res = importar_dataframe(df, franja=franja_detectada)
+                print(f"   ✅ Resultado: {res}")

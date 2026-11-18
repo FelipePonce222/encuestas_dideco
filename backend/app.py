@@ -337,34 +337,75 @@ def obtener_encuestas_recientes():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/vecinos/prioritarios', methods=['GET'])
-def obtener_vecinos_prioritarios():
+
+
+@app.route('/api/vecinos/riesgo/<categoria>', methods=['GET'])
+def obtener_vecinos_por_riesgo(categoria):
     try:
+        filtros = {
+            'prioritarios': ("('Vulnerabilidad Crítica', 'Vulnerabilidad Alta')", "DESC"),
+            'moderada': ("('Vulnerabilidad Moderada')", "DESC"),
+            'baja': ("('Vulnerabilidad Baja')", "DESC"),
+        }
+
+        if categoria not in filtros:
+            return jsonify({'error': 'Categoría de riesgo no válida'}), 400
+
+        clausula_in, orden_ivpm = filtros[categoria]
+
         conn = get_connection()
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT id, rut, nombre, edad, direccion, unidad_vecinal, franja,
                    hallazgo, ivpm_score, nivel_riesgo, fecha_registro
             FROM vecinos
-            WHERE nivel_riesgo IN ('Vulnerabilidad Crítica', 'Vulnerabilidad Alta')
+            WHERE nivel_riesgo IN {clausula_in}
             ORDER BY
                 CASE nivel_riesgo
                     WHEN 'Vulnerabilidad Crítica' THEN 1
                     WHEN 'Vulnerabilidad Alta' THEN 2
-                    ELSE 3
+                    WHEN 'Vulnerabilidad Moderada' THEN 3
+                    WHEN 'Vulnerabilidad Baja' THEN 4
+                    ELSE 5
                 END,
-                ivpm_score DESC,
+                ivpm_score {orden_ivpm},
                 nombre ASC
         """)
         filas = cursor.fetchall()
         conn.close()
 
-        prioritarios = [dict(fila) for fila in filas]
-        return jsonify(prioritarios), 200
+        return jsonify([dict(fila) for fila in filas]), 200
 
     except Exception as e:
-        print(f"❌ Error al obtener vecinos prioritarios: {e}")
+        print(f"❌ Error al obtener vecinos por riesgo ({categoria}): {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/vecino/id/<int:vecino_id>', methods=['GET'])
+def obtener_vecino_por_id(vecino_id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM vecinos WHERE id = ?", (vecino_id,))
+        vecino = cursor.fetchone()
+        conn.close()
+
+        if not vecino:
+            return jsonify({'message': 'Vecino no encontrado'}), 404
+
+        vecino_dict = dict(vecino)
+        if vecino_dict.get('datos_completos'):
+            try:
+                vecino_dict['encuesta_detalle'] = json.loads(vecino_dict['datos_completos'])
+            except Exception:
+                vecino_dict['encuesta_detalle'] = {}
+        else:
+            vecino_dict['encuesta_detalle'] = {}
+
+        return jsonify(vecino_dict), 200
+
+    except Exception as e:
+        print(f"Error al obtener vecino por ID: {e}")
         return jsonify({'error': str(e)}), 500
 
 # ⚡ El servidor SIEMPRE debe arrancarse al final de todo el archivo

@@ -68,6 +68,22 @@ export default function App() {
           } 
         />
         <Route 
+          path="/vulnerabilidad-moderada" 
+          element={
+            <ProtectedRoute>
+              <PrioridadAlta categoria="moderada" />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/vulnerabilidad-baja" 
+          element={
+            <ProtectedRoute>
+              <PrioridadAlta categoria="baja" />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/mi-perfil" 
           element={
             <ProtectedRoute>
