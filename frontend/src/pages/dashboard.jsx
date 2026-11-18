@@ -87,6 +87,12 @@ export default function Dashboard() {
     (stats?.niveles_riesgo?.['Vulnerabilidad Crítica'] || 0) +
     (stats?.niveles_riesgo?.['Vulnerabilidad Alta'] || 0);
 
+  const totalModerada = stats?.niveles_riesgo?.['Vulnerabilidad Moderada'] || 0;
+  const totalBaja = stats?.niveles_riesgo?.['Vulnerabilidad Baja'] || 0;
+
+  const viviendasVisitadas = stats?.total_encuestas || 0;
+  const encuestasRealizadas = totalPrioritarios + totalModerada + totalBaja;
+
   return (
     <div className="dashboard-container">
       <Navbar />
@@ -123,12 +129,31 @@ export default function Dashboard() {
         <h3 className="dashboard-section-title">Panel de Control y Cobertura IVPM</h3>
 
         {/* TARJETAS KPI */}
-        <div className="dashboard-kpi-grid">
+        <div
+          className="dashboard-kpi-grid"
+          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))' }}
+        >
           <div className="kpi-card kpi-card-total">
-            <span className="kpi-card-label">TOTAL REGISTROS</span>
+            <span className="kpi-card-label">VIVIENDAS VISITADAS</span>
             <h2 className="kpi-card-value">
-              {cargando ? '...' : (stats?.total_encuestas || 0)}
+              {cargando ? '...' : viviendasVisitadas}
             </h2>
+            <span className="kpi-card-link" style={{ color: '#718096' }}>
+              Total registros en terreno
+            </span>
+          </div>
+
+          <div
+            className="kpi-card kpi-card-total"
+            style={{ borderLeftColor: '#2b6cb0' }}
+          >
+            <span className="kpi-card-label">ENCUESTAS REALIZADAS</span>
+            <h2 className="kpi-card-value" style={{ color: '#2b6cb0' }}>
+              {cargando ? '...' : encuestasRealizadas}
+            </h2>
+            <span className="kpi-card-link" style={{ color: '#4a5568' }}>
+              Con evaluación IVPM
+            </span>
           </div>
 
           <div
@@ -150,7 +175,7 @@ export default function Dashboard() {
           >
             <span className="kpi-card-label">VULNERABILIDAD MODERADA</span>
             <h2 className="kpi-card-value">
-              {cargando ? '...' : (stats?.niveles_riesgo?.['Vulnerabilidad Moderada'] || 0)}
+              {cargando ? '...' : totalModerada}
             </h2>
             <span className="kpi-card-link">Ver listado →</span>
           </div>
@@ -162,7 +187,7 @@ export default function Dashboard() {
           >
             <span className="kpi-card-label">VULNERABILIDAD BAJA</span>
             <h2 className="kpi-card-value">
-              {cargando ? '...' : (stats?.niveles_riesgo?.['Vulnerabilidad Baja'] || 0)}
+              {cargando ? '...' : totalBaja}
             </h2>
             <span className="kpi-card-link">Ver listado →</span>
           </div>

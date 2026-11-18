@@ -31,6 +31,7 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
   const [error, setError] = useState('');
 
   // Filtros
+  const [filtroFranja, setFiltroFranja] = useState('TODOS');
   const [filtroNivel, setFiltroNivel] = useState('TODOS');
   const [filtroTerritorio, setFiltroTerritorio] = useState('TODOS');
   const [busqueda, setBusqueda] = useState('');
@@ -45,6 +46,7 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
   useEffect(() => {
     setCargando(true);
     setError('');
+    setFiltroFranja('TODOS');
     setFiltroNivel('TODOS');
     setFiltroTerritorio('TODOS');
     setBusqueda('');
@@ -65,15 +67,31 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
       });
   }, [categoria]);
 
-  const territoriosDisponibles = useMemo(() => {
-    const setTerr = new Set(
-      vecinos.map((v) => (v.unidad_vecinal || '').trim()).filter(Boolean)
+  const franjasDisponibles = useMemo(() => {
+    const setFranjas = new Set(
+      vecinos.map((v) => (v.franja || '').trim()).filter(Boolean)
     );
-    return Array.from(setTerr).sort();
+    return Array.from(setFranjas).sort((a, b) =>
+      a.localeCompare(b, 'es', { numeric: true })
+    );
   }, [vecinos]);
 
+  const vecinosPorFranja = useMemo(() => {
+    if (filtroFranja === 'TODOS') return vecinos;
+    return vecinos.filter((v) => (v.franja || '').trim() === filtroFranja);
+  }, [vecinos, filtroFranja]);
+
+  const territoriosDisponibles = useMemo(() => {
+    const setTerr = new Set(
+      vecinosPorFranja.map((v) => (v.unidad_vecinal || '').trim()).filter(Boolean)
+    );
+    return Array.from(setTerr).sort((a, b) =>
+      a.localeCompare(b, 'es', { numeric: true })
+    );
+  }, [vecinosPorFranja]);
+
   const vecinosFiltrados = useMemo(() => {
-    return vecinos.filter((v) => {
+    return vecinosPorFranja.filter((v) => {
       if (esVistaPrioritarios && filtroNivel !== 'TODOS' && v.nivel_riesgo !== filtroNivel) {
         return false;
       }
@@ -82,22 +100,26 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
       }
       if (busqueda.trim()) {
         const q = busqueda.toLowerCase().trim();
-        const texto = `${v.nombre || ''} ${v.rut || ''} ${v.direccion || ''}`.toLowerCase();
+        const texto = `${v.nombre || ''} ${v.rut || ''} ${v.direccion || ''} ${v.franja || ''}`.toLowerCase();
         if (!texto.includes(q)) return false;
       }
       return true;
     });
-  }, [vecinos, esVistaPrioritarios, filtroNivel, filtroTerritorio, busqueda]);
+  }, [vecinosPorFranja, esVistaPrioritarios, filtroNivel, filtroTerritorio, busqueda]);
 
-  const totalCriticos = vecinos.filter((v) => v.nivel_riesgo === 'Vulnerabilidad Crítica').length;
-  const totalAltos = vecinos.filter((v) => v.nivel_riesgo === 'Vulnerabilidad Alta').length;
+  const totalCriticos = vecinosPorFranja.filter(
+    (v) => v.nivel_riesgo === 'Vulnerabilidad Crítica'
+  ).length;
+  const totalAltos = vecinosPorFranja.filter(
+    (v) => v.nivel_riesgo === 'Vulnerabilidad Alta'
+  ).length;
 
   const promedioIvpm = useMemo(() => {
-    const validos = vecinos.filter((v) => typeof v.ivpm_score === 'number');
+    const validos = vecinosPorFranja.filter((v) => typeof v.ivpm_score === 'number');
     if (validos.length === 0) return 'N/A';
     const suma = validos.reduce((acc, v) => acc + v.ivpm_score, 0);
     return `${(suma / validos.length).toFixed(1)} pts`;
-  }, [vecinos]);
+  }, [vecinosPorFranja]);
 
   const obtenerBadgeInfo = (nivel) => {
     switch (nivel) {
@@ -131,6 +153,36 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
     }
   };
 
+  const formatearRSH = (ficha, det) => {
+    if (ficha?.rsh) return ficha.rsh;
+
+    const aplica = det.rsh_aplica || det.rsh_tiene || det.tiene_rsh;
+    const tramo = det.rsh_tramo || det.tramo_rsh || det.rsh_porcentaje || det.porcentaje_rsh;
+    if (aplica && tramo) {
+      return aplica === 'Sí' ? `${tramo}` : `${aplica} (${tramo})`;
+    }
+
+    const directo =
+      det.rsh ||
+      det.registro_social_hogares ||
+      det.registro_social ||
+      det.calificacion_socioeconomica ||
+      tramo ||
+      aplica;
+    if (directo) return String(directo);
+
+    const entradasRsh = Object.entries(det || {})
+      .filter(([k, v]) => /rsh|registro\s*social/i.test(k) && v !== null && String(v).trim() !== '')
+      .map(([, v]) => String(v).trim());
+
+    if (entradasRsh.length > 1) {
+      return Array.from(new Set(entradasRsh)).join(' — ');
+    }
+    if (entradasRsh.length === 1) return entradasRsh[0];
+
+    return 'No registrado';
+  };
+
   const detalle = fichaSeleccionada?.encuesta_detalle || {};
   const badgeModal = fichaSeleccionada ? obtenerBadgeInfo(fichaSeleccionada.nivel_riesgo) : null;
 
@@ -145,8 +197,8 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
         <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
           Búsqueda por Rut
         </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/generar-informe')}>
-          Generar Informe
+        <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
+          Informes
         </button>
         <button
           className="dashboard-action-btn"
@@ -180,8 +232,10 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
                 onClick={() => setFiltroNivel('TODOS')}
                 className={`prioridad-kpi-item kpi-todos ${filtroNivel === 'TODOS' ? 'active' : ''}`}
               >
-                <span className="kpi-label">TOTAL PRIORITARIOS</span>
-                <h3 className="kpi-number">{vecinos.length}</h3>
+                <span className="kpi-label">
+                  TOTAL PRIORITARIOS {filtroFranja !== 'TODOS' ? `(${filtroFranja.toUpperCase()})` : ''}
+                </span>
+                <h3 className="kpi-number">{vecinosPorFranja.length}</h3>
               </div>
 
               <div
@@ -205,8 +259,9 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
               <div className={`prioridad-kpi-item ${categoria === 'moderada' ? 'kpi-moderada' : 'kpi-baja'}`}>
                 <span className="kpi-label">
                   {categoria === 'moderada' ? 'TOTAL VULNERABILIDAD MODERADA' : 'TOTAL VULNERABILIDAD BAJA'}
+                  {filtroFranja !== 'TODOS' ? ` (${filtroFranja.toUpperCase()})` : ''}
                 </span>
-                <h3 className="kpi-number">{vecinos.length}</h3>
+                <h3 className="kpi-number">{vecinosPorFranja.length}</h3>
               </div>
 
               <div className="prioridad-kpi-item kpi-todos">
@@ -230,6 +285,20 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
               onChange={(e) => setBusqueda(e.target.value)}
               className="prioridad-input"
             />
+
+            <select
+              value={filtroFranja}
+              onChange={(e) => {
+                setFiltroFranja(e.target.value);
+                setFiltroTerritorio('TODOS');
+              }}
+              className="prioridad-select"
+            >
+              <option value="TODOS">Todas las Franjas</option>
+              {franjasDisponibles.map((f) => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
 
             {esVistaPrioritarios && (
               <select
@@ -262,7 +331,8 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
           {!cargando && !error && (
             <>
               <p className="prioridad-conteo">
-                Mostrando <strong>{vecinosFiltrados.length}</strong> de {vecinos.length} registros.
+                Mostrando <strong>{vecinosFiltrados.length}</strong> de {vecinosPorFranja.length} registros
+                {filtroFranja !== 'TODOS' ? ` en ${filtroFranja}` : ''}.
               </p>
 
               <div className="prioridad-tabla-wrapper">
@@ -275,6 +345,7 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
                       <th>RUT</th>
                       <th>Edad</th>
                       <th>Dirección</th>
+                      <th>Franja</th>
                       <th>UV / Villa</th>
                       <th className="th-centro">Acción</th>
                     </tr>
@@ -282,7 +353,7 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
                   <tbody>
                     {vecinosFiltrados.length === 0 ? (
                       <tr>
-                        <td colSpan="8" className="prioridad-sin-resultados">
+                        <td colSpan="9" className="prioridad-sin-resultados">
                           No se encontraron registros con los filtros seleccionados.
                         </td>
                       </tr>
@@ -304,6 +375,7 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
                             <td className="td-rut">{v.rut}</td>
                             <td>{v.edad ? `${v.edad} años` : '—'}</td>
                             <td>{v.direccion || '—'}</td>
+                            <td>{v.franja || '—'}</td>
                             <td>{v.unidad_vecinal || '—'}</td>
                             <td className="td-accion">
                               <button
@@ -364,7 +436,13 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
               <div><strong>Dirección:</strong> {fichaSeleccionada.direccion || 'No registrada'}</div>
               <div><strong>Unidad Vecinal:</strong> {fichaSeleccionada.unidad_vecinal || 'No registrada'}</div>
               <div><strong>Territorio:</strong> {fichaSeleccionada.franja || 'No registrado'}</div>
-              <div><strong>Estado Visita:</strong> {fichaSeleccionada.hallazgo || 'No registrado'}</div>
+              <div>
+                <strong>Registro Social (RSH):</strong>{' '}
+                {cargandoFicha ? 'Cargando...' : formatearRSH(fichaSeleccionada, detalle)}
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <strong>Estado Visita:</strong> {fichaSeleccionada.hallazgo || 'No registrado'}
+              </div>
             </div>
 
             {/* Caja Azul Puntaje Global IVPM */}

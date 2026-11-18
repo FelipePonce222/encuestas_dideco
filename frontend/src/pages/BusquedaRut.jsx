@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import { apiFetch } from '../api';
+import { descargarFichaPdf } from '../utils/GenerarFichaPDF';
 import './BusquedaRut.css';
 
 export default function BusquedaRut() {
@@ -52,12 +53,43 @@ export default function BusquedaRut() {
     }
   };
 
+  const formatearRSH = (ficha, det) => {
+    if (ficha?.rsh) return ficha.rsh;
+
+    const aplica = det.rsh_aplica || det.rsh_tiene || det.tiene_rsh;
+    const tramo = det.rsh_tramo || det.tramo_rsh || det.rsh_porcentaje || det.porcentaje_rsh;
+    if (aplica && tramo) {
+      return aplica === 'Sí' ? `${tramo}` : `${aplica} (${tramo})`;
+    }
+
+    const directo =
+      det.rsh ||
+      det.registro_social_hogares ||
+      det.registro_social ||
+      det.calificacion_socioeconomica ||
+      tramo ||
+      aplica;
+    if (directo) return String(directo);
+
+    const entradasRsh = Object.entries(det || {})
+      .filter(([k, v]) => /rsh|registro\s*social/i.test(k) && v !== null && String(v).trim() !== '')
+      .map(([, v]) => String(v).trim());
+
+    if (entradasRsh.length > 1) {
+      return Array.from(new Set(entradasRsh)).join(' — ');
+    }
+    if (entradasRsh.length === 1) return entradasRsh[0];
+
+    return 'No registrado';
+  };
+
   // Helper para leer del JSON datos_completos o encuesta_detalle
   const detalle = vecino?.encuesta_detalle || {};
+  const rshTexto = vecino ? formatearRSH(vecino, detalle) : 'No registrado';
 
   return (
     <div className="busqueda-container">
-      <Navbar/>
+      <Navbar />
       <div className="dashboard-action-bar">
         <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
           Nueva Encuesta
@@ -127,11 +159,14 @@ export default function BusquedaRut() {
 
               <div className="resultado-grid">
                 <div><strong>RUT:</strong> {vecino.rut}</div>
-                <div><strong>Edad:</strong> {vecino.edad || 'No registrada'} años</div>
-                <div><strong>Dirección:</strong> {vecino.direccion}</div>
-                <div><strong>Unidad Vecinal:</strong> {vecino.unidad_vecinal}</div>
-                <div><strong>Territorio:</strong> {vecino.franja}</div>
-                <div><strong>Estado Visita:</strong> {vecino.hallazgo}</div>
+                <div><strong>Edad:</strong> {vecino.edad ? `${vecino.edad} años` : 'No registrada'}</div>
+                <div><strong>Dirección:</strong> {vecino.direccion || 'No registrada'}</div>
+                <div><strong>Unidad Vecinal:</strong> {vecino.unidad_vecinal || 'No registrada'}</div>
+                <div><strong>Territorio:</strong> {vecino.franja || 'No registrado'}</div>
+                <div><strong>Registro Social (RSH):</strong> {rshTexto}</div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <strong>Estado Visita:</strong> {vecino.hallazgo || 'No registrado'}
+                </div>
               </div>
 
               <div className="ivpm-score-box">
@@ -141,8 +176,16 @@ export default function BusquedaRut() {
                 </span>
               </div>
 
-              {/* BOTÓN PARA DESPLEGAR / OCULTAR EL DETALLE DE 55 PREGUNTAS */}
-              <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              {/* BOTONES DE ACCIÓN: DESPLEGAR FICHA Y DESCARGAR PDF */}
+              <div
+                style={{
+                  marginTop: '20px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  flexWrap: 'wrap'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setMostrarDetalle(!mostrarDetalle)}
@@ -157,6 +200,22 @@ export default function BusquedaRut() {
                   }}
                 >
                   {mostrarDetalle ? '▲ Ocultar Ficha Completa' : '📋 Ver Ficha Completa (54+ preguntas)'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => descargarFichaPdf({ ...vecino, rsh: rshTexto })}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: '#c53030',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  📄 Descargar en PDF
                 </button>
               </div>
 
