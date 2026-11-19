@@ -215,18 +215,14 @@ export default function Informes() {
       <Navbar />
 
       <div className="dashboard-action-bar">
-        {tienePermiso('crear_encuesta') && (
-          <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
-            Nueva Encuesta
-          </button>
-        )}
-        {tienePermiso('buscar_rut') && (
-          <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
-            Búsqueda por Rut
-          </button>
-        )}
-        <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
-          Informes
+        <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
+          Nueva Encuesta
+        </button>
+        <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
+          Búsqueda por Rut
+        </button>
+        <button className="dashboard-action-btn" onClick={() => navigate('/graficos')}>
+          Gráficos
         </button>
         <button
           className="dashboard-action-btn"

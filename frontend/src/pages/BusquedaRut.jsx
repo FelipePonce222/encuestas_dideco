@@ -97,8 +97,11 @@ export default function BusquedaRut() {
         <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
           Informes
         </button>
-        <button 
-          className="dashboard-action-btn" 
+        <button className="dashboard-action-btn" onClick={() => navigate('/graficos')}>
+          Gráficos
+        </button>
+        <button
+          className="dashboard-action-btn"
           onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}
         >
           Municipalidad
