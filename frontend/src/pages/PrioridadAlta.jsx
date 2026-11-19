@@ -4,6 +4,7 @@ import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import { apiFetch } from '../api';
 import { descargarFichaPdf } from '../utils/GenerarFichaPDF';
+import { tienePermiso } from '../utils/permisos';
 import './PrioridadAlta.css';
 
 const CONFIG_CATEGORIAS = {
@@ -30,15 +31,22 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
+  const puedeEditar = tienePermiso('editar_encuesta');
+  const puedeEliminar = tienePermiso('eliminar_encuesta');
+
   // Filtros
   const [filtroFranja, setFiltroFranja] = useState('TODOS');
   const [filtroNivel, setFiltroNivel] = useState('TODOS');
   const [filtroTerritorio, setFiltroTerritorio] = useState('TODOS');
   const [busqueda, setBusqueda] = useState('');
 
-  // Estado del modal de Ficha Completa
+  // Estado del modal de Ficha Completa + Edición
   const [fichaSeleccionada, setFichaSeleccionada] = useState(null);
   const [cargandoFicha, setCargandoFicha] = useState(false);
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [formEdicion, setFormEdicion] = useState({});
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [mensajeModal, setMensajeModal] = useState('');
 
   const config = CONFIG_CATEGORIAS[categoria] || CONFIG_CATEGORIAS.prioritarios;
   const esVistaPrioritarios = categoria === 'prioritarios';
@@ -51,6 +59,8 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
     setFiltroTerritorio('TODOS');
     setBusqueda('');
     setFichaSeleccionada(null);
+    setModoEdicion(false);
+    setMensajeModal('');
 
     apiFetch(`http://localhost:5000/api/vecinos/riesgo/${categoria}`)
       .then((res) => {
@@ -138,6 +148,8 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
 
   const abrirFichaCompleta = async (vecinoFila) => {
     setCargandoFicha(true);
+    setModoEdicion(false);
+    setMensajeModal('');
     setFichaSeleccionada({ ...vecinoFila, encuesta_detalle: {} });
 
     try {
@@ -183,6 +195,92 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
     return 'No registrado';
   };
 
+  const activarModoEdicion = () => {
+    const det = fichaSeleccionada?.encuesta_detalle || {};
+    setFormEdicion({
+      nombre: fichaSeleccionada.nombre || '',
+      rut: fichaSeleccionada.rut || '',
+      edad: fichaSeleccionada.edad ?? '',
+      direccion: fichaSeleccionada.direccion || '',
+      unidad_vecinal: fichaSeleccionada.unidad_vecinal || '',
+      franja: fichaSeleccionada.franja || 'Franja 1',
+      hallazgo: fichaSeleccionada.hallazgo || '',
+      tramo_rsh: det.tramo_rsh || det.rsh_tramo || det.rsh || '',
+      salud_centro_nombre: det.salud_centro_nombre || '',
+      salud_centro_comuna: det.salud_centro_comuna || '',
+      patologias_tratamiento: det.patologias_tratamiento || '',
+      situacion_habitacional: det.situacion_habitacional || '',
+      material_predominante: det.material_predominante || '',
+      estado_vivienda: det.estado_vivienda || '',
+      revision_electrica: det.revision_electrica || '',
+      alimentacion_frecuencia: det.alimentacion_frecuencia || '',
+      convivientes_cantidad: det.convivientes_cantidad || '',
+      frecuencia_visitas: det.frecuencia_visitas || '',
+      recibe_cuidados: det.recibe_cuidados || '',
+      programa_social: det.programa_social || '',
+      programa_social_detalle: det.programa_social_detalle || '',
+      observaciones: det.observaciones || fichaSeleccionada.observaciones || ''
+    });
+    setMensajeModal('');
+    setModoEdicion(true);
+  };
+
+  const handleCampoEdicion = (campo, valor) => {
+    setFormEdicion((prev) => ({ ...prev, [campo]: valor }));
+  };
+
+  const handleGuardarEdicion = async (e) => {
+    e.preventDefault();
+    setGuardandoEdicion(true);
+    setMensajeModal('');
+
+    try {
+      const res = await apiFetch(`http://localhost:5000/api/vecinos/${fichaSeleccionada.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formEdicion)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudieron guardar los cambios.');
+      }
+
+      const actualizado = data.vecino;
+      setFichaSeleccionada(actualizado);
+      setVecinos((prev) =>
+        prev.map((item) => (item.id === actualizado.id ? { ...item, ...actualizado } : item))
+      );
+      setModoEdicion(false);
+      setMensajeModal('✅ Cambios guardados y puntaje IVPM actualizado.');
+    } catch (err) {
+      setMensajeModal(`❌ ${err.message}`);
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
+
+  const handleEliminarEncuesta = async () => {
+    if (!window.confirm(`¿Estás seguro/a de eliminar la encuesta de "${fichaSeleccionada.nombre}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`http://localhost:5000/api/vecinos/${fichaSeleccionada.id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo eliminar la encuesta.');
+      }
+
+      setVecinos((prev) => prev.filter((item) => item.id !== fichaSeleccionada.id));
+      setFichaSeleccionada(null);
+    } catch (err) {
+      setMensajeModal(`❌ ${err.message}`);
+    }
+  };
+
   const detalle = fichaSeleccionada?.encuesta_detalle || {};
   const badgeModal = fichaSeleccionada ? obtenerBadgeInfo(fichaSeleccionada.nivel_riesgo) : null;
 
@@ -191,15 +289,21 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
       <Navbar />
 
       <div className="dashboard-action-bar">
-        <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
-          Nueva Encuesta
-        </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
-          Búsqueda por Rut
-        </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
-          Informes
-        </button>
+        {tienePermiso('crear_encuesta') && (
+          <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
+            Nueva Encuesta
+          </button>
+        )}
+        {tienePermiso('buscar_rut') && (
+          <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
+            Búsqueda por Rut
+          </button>
+        )}
+        {tienePermiso('informes_ver') && (
+          <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
+            Informes
+          </button>
+        )}
         <button
           className="dashboard-action-btn"
           onClick={() => window.open('https://www.municipalidadlagranja.cl/', '_blank')}
@@ -399,11 +503,14 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
         </div>
       </main>
 
-      {/* MODAL DE FICHA COMPLETA DESPLEGADA POR DEFECTO */}
+      {/* MODAL DE FICHA COMPLETA + EDICIÓN / ELIMINACIÓN */}
       {fichaSeleccionada && (
         <div
           className="ficha-modal-overlay"
-          onClick={() => setFichaSeleccionada(null)}
+          onClick={() => {
+            setFichaSeleccionada(null);
+            setModoEdicion(false);
+          }}
         >
           <div
             className="ficha-modal-card"
@@ -414,118 +521,316 @@ export default function PrioridadAlta({ categoria = 'prioritarios' }) {
               <button
                 type="button"
                 className="ficha-modal-close"
-                onClick={() => setFichaSeleccionada(null)}
+                onClick={() => {
+                  setFichaSeleccionada(null);
+                  setModoEdicion(false);
+                }}
                 title="Cerrar ficha"
               >
                 ✕ Cerrar
               </button>
             </div>
 
+            {mensajeModal && (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  marginBottom: '14px',
+                  fontWeight: 'bold',
+                  fontSize: '13.5px',
+                  backgroundColor: mensajeModal.includes('❌') ? '#fed7d7' : '#e6fffa',
+                  color: mensajeModal.includes('❌') ? '#9b2c2c' : '#234e52'
+                }}
+              >
+                {mensajeModal}
+              </div>
+            )}
+
             {/* Cabecera Nombre + Pill Nivel Riesgo */}
             <div className="ficha-resultado-header">
-              <h3>{fichaSeleccionada.nombre}</h3>
+              <h3>{modoEdicion ? `✏️ Editando: ${fichaSeleccionada.nombre}` : fichaSeleccionada.nombre}</h3>
               <span className={`ficha-badge-nivel ${badgeModal.clase}`}>
                 {fichaSeleccionada.nivel_riesgo}
               </span>
             </div>
 
-            {/* Datos principales en 2 columnas */}
-            <div className="ficha-resultado-grid">
-              <div><strong>RUT:</strong> {fichaSeleccionada.rut}</div>
-              <div><strong>Edad:</strong> {fichaSeleccionada.edad ? `${fichaSeleccionada.edad} años` : 'No registrada'}</div>
-              <div><strong>Dirección:</strong> {fichaSeleccionada.direccion || 'No registrada'}</div>
-              <div><strong>Unidad Vecinal:</strong> {fichaSeleccionada.unidad_vecinal || 'No registrada'}</div>
-              <div><strong>Territorio:</strong> {fichaSeleccionada.franja || 'No registrado'}</div>
-              <div>
-                <strong>Registro Social (RSH):</strong>{' '}
-                {cargandoFicha ? 'Cargando...' : formatearRSH(fichaSeleccionada, detalle)}
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <strong>Estado Visita:</strong> {fichaSeleccionada.hallazgo || 'No registrado'}
-              </div>
-            </div>
-
-            {/* Caja Azul Puntaje Global IVPM */}
-            <div className="ficha-ivpm-box">
-              <span className="ficha-ivpm-label">Puntaje Global IVPM:</span>
-              <span className="ficha-ivpm-value">
-                {fichaSeleccionada.ivpm_score !== null
-                  ? `${fichaSeleccionada.ivpm_score} / 100 pts`
-                  : 'N/A (Sin contacto/No aplica)'}
-              </span>
-            </div>
-
-            {/* Detalle completo desplegado por defecto */}
-            {cargandoFicha ? (
-              <p className="prioridad-estado-msg">Cargando antecedentes completos...</p>
-            ) : (
-              <div className="ficha-detalle-box">
-                <h4>🩺 Antecedentes de Salud y Funcionalidad</h4>
-                <p>
-                  <strong>Centro de Salud:</strong>{' '}
-                  {detalle.salud_centro_nombre || 'No registrado'} ({detalle.salud_centro_comuna || 'N/A'})
-                </p>
-                <p>
-                  <strong>Patologías:</strong>{' '}
-                  {Array.isArray(detalle.patologias) && detalle.patologias.length > 0
-                    ? detalle.patologias.join(', ')
-                    : 'Ninguna declarada'}{' '}
-                  {detalle.patologias_otra ? `(${detalle.patologias_otra})` : ''}
-                </p>
-                <p>
-                  <strong>Tratamiento:</strong> {detalle.patologias_tratamiento || 'No informa'}
-                </p>
-                <p>
-                  <strong>Discapacidad / Credencial:</strong>{' '}
-                  {detalle.discapacidad_aplica === 'Sí'
-                    ? `${detalle.discapacidad_tipo} - Credencial: ${detalle.discapacidad_credencial}`
-                    : 'No presenta'}
-                </p>
-                <p>
-                  <strong>Ayuda Técnica:</strong>{' '}
-                  {detalle.ayuda_tecnica_aplica || 'No informa'}{' '}
-                  {detalle.ayuda_tecnica_detalle ? `(${detalle.ayuda_tecnica_detalle})` : ''}
-                </p>
-
-                <h4>🏠 Vivienda y Entorno Habitacional</h4>
-                <p><strong>Situación Habitacional:</strong> {detalle.situacion_habitacional || 'No informa'}</p>
-                <p><strong>Material Predominante:</strong> {detalle.material_predominante || 'No informa'}</p>
-                <p><strong>Estado General Vivienda:</strong> {detalle.estado_vivienda || 'No informa'}</p>
-                <p><strong>Revisión Eléctrica:</strong> {detalle.revision_electrica || 'No informa'}</p>
-                <p><strong>Alimentación (veces al día):</strong> {detalle.alimentacion_frecuencia || 'No informa'}</p>
-
-                <h4>🤝 Redes de Apoyo y Cuidados</h4>
-                <p><strong>Convivientes en hogar:</strong> {detalle.convivientes_cantidad || '1'} persona(s)</p>
-                <p><strong>Frecuencia de Visitas:</strong> {detalle.frecuencia_visitas || 'No informa'}</p>
-                <p>
-                  <strong>¿Recibe cuidados?:</strong>{' '}
-                  {detalle.recibe_cuidados || 'No informa'}{' '}
-                  {Array.isArray(detalle.recibe_cuidados_quien) && detalle.recibe_cuidados_quien.length > 0
-                    ? `(${detalle.recibe_cuidados_quien.join(', ')})`
-                    : ''}
-                </p>
-                <p>
-                  <strong>Organizaciones / Programas:</strong>{' '}
-                  {detalle.programa_social === 'Sí' ? detalle.programa_social_detalle : 'Ninguno'}
-                </p>
-
-                <h4>📝 Observaciones de Campo</h4>
-                <div className="ficha-observaciones-box">
-                  "{detalle.observaciones || fichaSeleccionada.observaciones || 'Sin observaciones registradas.'}"
+            {modoEdicion ? (
+              /* FORMULARIO DE EDICIÓN DE ENCUESTA */
+              <form onSubmit={handleGuardarEdicion} className="ficha-detalle-box">
+                <h4>👤 Identificación y Territorio (Corrección de datos)</h4>
+                <div className="ficha-resultado-grid">
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Nombre Completo *</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.nombre}
+                      onChange={(e) => handleCampoEdicion('nombre', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>RUT</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.rut}
+                      onChange={(e) => handleCampoEdicion('rut', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Edad</label>
+                    <input
+                      type="number"
+                      className="prioridad-input"
+                      value={formEdicion.edad}
+                      onChange={(e) => handleCampoEdicion('edad', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Dirección</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.direccion}
+                      onChange={(e) => handleCampoEdicion('direccion', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Unidad Vecinal / Villa</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.unidad_vecinal}
+                      onChange={(e) => handleCampoEdicion('unidad_vecinal', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Territorio / Franja</label>
+                    <select
+                      className="prioridad-select"
+                      value={formEdicion.franja}
+                      onChange={(e) => handleCampoEdicion('franja', e.target.value)}
+                    >
+                      <option value="Franja 1">Franja 1</option>
+                      <option value="Franja 2">Franja 2</option>
+                      <option value="Franja 3">Franja 3</option>
+                      <option value="Sin franja">Sin franja</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Tramo RSH</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      placeholder="Ej: 0% al 40%"
+                      value={formEdicion.tramo_rsh}
+                      onChange={(e) => handleCampoEdicion('tramo_rsh', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Estado Visita / Hallazgo</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.hallazgo}
+                      onChange={(e) => handleCampoEdicion('hallazgo', e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Botón inferior: Descargar en PDF */}
-            <div className="ficha-modal-actions">
-              <button
-                type="button"
-                className="ficha-btn-pdf"
-                onClick={() => descargarFichaPdf(fichaSeleccionada)}
-              >
-                📄 Descargar en PDF
-              </button>
-            </div>
+                <h4>🩺 Salud y Vivienda</h4>
+                <div className="ficha-resultado-grid">
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Centro de Salud</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.salud_centro_nombre}
+                      onChange={(e) => handleCampoEdicion('salud_centro_nombre', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Tratamiento Médico</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.patologias_tratamiento}
+                      onChange={(e) => handleCampoEdicion('patologias_tratamiento', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Situación Habitacional</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.situacion_habitacional}
+                      onChange={(e) => handleCampoEdicion('situacion_habitacional', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '4px' }}>Estado General Vivienda</label>
+                    <input
+                      type="text"
+                      className="prioridad-input"
+                      value={formEdicion.estado_vivienda}
+                      onChange={(e) => handleCampoEdicion('estado_vivienda', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <h4>📝 Observaciones de Campo (Redacción y Ortografía)</h4>
+                <textarea
+                  rows="4"
+                  className="prioridad-input"
+                  style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
+                  value={formEdicion.observaciones}
+                  onChange={(e) => handleCampoEdicion('observaciones', e.target.value)}
+                />
+
+                <div className="ficha-modal-actions" style={{ gap: '12px', flexWrap: 'wrap' }}>
+                  <button
+                    type="submit"
+                    disabled={guardandoEdicion}
+                    className="ficha-btn-pdf"
+                    style={{ backgroundColor: '#2f855a' }}
+                  >
+                    {guardandoEdicion ? '⏳ Guardando...' : '💾 Guardar Cambios'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModoEdicion(false)}
+                    className="ficha-modal-close"
+                    style={{ padding: '12px 20px', fontSize: '14px' }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                {/* Datos principales en 2 columnas */}
+                <div className="ficha-resultado-grid">
+                  <div><strong>RUT:</strong> {fichaSeleccionada.rut}</div>
+                  <div><strong>Edad:</strong> {fichaSeleccionada.edad ? `${fichaSeleccionada.edad} años` : 'No registrada'}</div>
+                  <div><strong>Dirección:</strong> {fichaSeleccionada.direccion || 'No registrada'}</div>
+                  <div><strong>Unidad Vecinal:</strong> {fichaSeleccionada.unidad_vecinal || 'No registrada'}</div>
+                  <div><strong>Territorio:</strong> {fichaSeleccionada.franja || 'No registrado'}</div>
+                  <div>
+                    <strong>Registro Social (RSH):</strong>{' '}
+                    {cargandoFicha ? 'Cargando...' : formatearRSH(fichaSeleccionada, detalle)}
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <strong>Estado Visita:</strong> {fichaSeleccionada.hallazgo || 'No registrado'}
+                  </div>
+                </div>
+
+                {/* Caja Azul Puntaje Global IVPM */}
+                <div className="ficha-ivpm-box">
+                  <span className="ficha-ivpm-label">Puntaje Global IVPM:</span>
+                  <span className="ficha-ivpm-value">
+                    {fichaSeleccionada.ivpm_score !== null
+                      ? `${fichaSeleccionada.ivpm_score} / 100 pts`
+                      : 'N/A (Sin contacto/No aplica)'}
+                  </span>
+                </div>
+
+                {/* Detalle completo desplegado por defecto */}
+                {cargandoFicha ? (
+                  <p className="prioridad-estado-msg">Cargando antecedentes completos...</p>
+                ) : (
+                  <div className="ficha-detalle-box">
+                    <h4>🩺 Antecedentes de Salud y Funcionalidad</h4>
+                    <p>
+                      <strong>Centro de Salud:</strong>{' '}
+                      {detalle.salud_centro_nombre || 'No registrado'} ({detalle.salud_centro_comuna || 'N/A'})
+                    </p>
+                    <p>
+                      <strong>Patologías:</strong>{' '}
+                      {Array.isArray(detalle.patologias) && detalle.patologias.length > 0
+                        ? detalle.patologias.join(', ')
+                        : 'Ninguna declarada'}{' '}
+                      {detalle.patologias_otra ? `(${detalle.patologias_otra})` : ''}
+                    </p>
+                    <p>
+                      <strong>Tratamiento:</strong> {detalle.patologias_tratamiento || 'No informa'}
+                    </p>
+                    <p>
+                      <strong>Discapacidad / Credencial:</strong>{' '}
+                      {detalle.discapacidad_aplica === 'Sí'
+                        ? `${detalle.discapacidad_tipo} - Credencial: ${detalle.discapacidad_credencial}`
+                        : 'No presenta'}
+                    </p>
+                    <p>
+                      <strong>Ayuda Técnica:</strong>{' '}
+                      {detalle.ayuda_tecnica_aplica || 'No informa'}{' '}
+                      {detalle.ayuda_tecnica_detalle ? `(${detalle.ayuda_tecnica_detalle})` : ''}
+                    </p>
+
+                    <h4>🏠 Vivienda y Entorno Habitacional</h4>
+                    <p><strong>Situación Habitacional:</strong> {detalle.situacion_habitacional || 'No informa'}</p>
+                    <p><strong>Material Predominante:</strong> {detalle.material_predominante || 'No informa'}</p>
+                    <p><strong>Estado General Vivienda:</strong> {detalle.estado_vivienda || 'No informa'}</p>
+                    <p><strong>Revisión Eléctrica:</strong> {detalle.revision_electrica || 'No informa'}</p>
+                    <p><strong>Alimentación (veces al día):</strong> {detalle.alimentacion_frecuencia || 'No informa'}</p>
+
+                    <h4>🤝 Redes de Apoyo y Cuidados</h4>
+                    <p><strong>Convivientes en hogar:</strong> {detalle.convivientes_cantidad || '1'} persona(s)</p>
+                    <p><strong>Frecuencia de Visitas:</strong> {detalle.frecuencia_visitas || 'No informa'}</p>
+                    <p>
+                      <strong>¿Recibe cuidados?:</strong>{' '}
+                      {detalle.recibe_cuidados || 'No informa'}{' '}
+                      {Array.isArray(detalle.recibe_cuidados_quien) && detalle.recibe_cuidados_quien.length > 0
+                        ? `(${detalle.recibe_cuidados_quien.join(', ')})`
+                        : ''}
+                    </p>
+                    <p>
+                      <strong>Organizaciones / Programas:</strong>{' '}
+                      {detalle.programa_social === 'Sí' ? detalle.programa_social_detalle : 'Ninguno'}
+                    </p>
+
+                    <h4>📝 Observaciones de Campo</h4>
+                    <div className="ficha-observaciones-box">
+                      "{detalle.observaciones || fichaSeleccionada.observaciones || 'Sin observaciones registradas.'}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Botones inferiores: PDF + Editar (Admin/Coord) + Eliminar (Admin) */}
+                <div className="ficha-modal-actions" style={{ gap: '12px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="ficha-btn-pdf"
+                    onClick={() => descargarFichaPdf(fichaSeleccionada)}
+                  >
+                    📄 Descargar en PDF
+                  </button>
+
+                  {puedeEditar && !cargandoFicha && (
+                    <button
+                      type="button"
+                      className="ficha-btn-pdf"
+                      style={{ backgroundColor: '#2b6cb0' }}
+                      onClick={activarModoEdicion}
+                    >
+                      ✏️ Editar Encuesta
+                    </button>
+                  )}
+
+                  {puedeEliminar && !cargandoFicha && (
+                    <button
+                      type="button"
+                      className="ficha-btn-pdf"
+                      style={{ backgroundColor: '#742a2a' }}
+                      onClick={handleEliminarEncuesta}
+                    >
+                      🗑️ Eliminar
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

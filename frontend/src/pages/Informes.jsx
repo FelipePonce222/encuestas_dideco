@@ -3,28 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import { apiFetch } from '../api';
+import { tienePermiso } from '../utils/permisos';
 import './Informes.css';
 
 export default function Informes() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // Estado del repositorio de documentos
+  const puedeSubir = tienePermiso('informes_subir');
+  const puedeEliminar = tienePermiso('informes_eliminar');
+  const puedeExportarExcel = tienePermiso('exportar_excel');
+
   const [documentos, setDocumentos] = useState([]);
   const [cargandoDocs, setCargandoDocs] = useState(true);
   const [subiendo, setSubiendo] = useState(false);
 
-  // Formulario de subida
   const [titulo, setTitulo] = useState('');
   const [franja, setFranja] = useState('General');
   const [descripcion, setDescripcion] = useState('');
   const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
 
-  // Filtros del listado
   const [filtroFranja, setFiltroFranja] = useState('TODAS');
   const [busqueda, setBusqueda] = useState('');
 
-  // Exportación rápida (Opción 2)
   const [descargandoExcel, setDescargandoExcel] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
@@ -180,7 +181,6 @@ export default function Informes() {
     });
   }, [documentos, filtroFranja, busqueda]);
 
-  // 📊 Función para descargar la planilla Excel global
   const handleDescargarExcel = async () => {
     setDescargandoExcel(true);
     setMensaje('');
@@ -215,12 +215,16 @@ export default function Informes() {
       <Navbar />
 
       <div className="dashboard-action-bar">
-        <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
-          Nueva Encuesta
-        </button>
-        <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
-          Búsqueda por Rut
-        </button>
+        {tienePermiso('crear_encuesta') && (
+          <button className="dashboard-action-btn" onClick={() => navigate('/nueva-encuesta')}>
+            Nueva Encuesta
+          </button>
+        )}
+        {tienePermiso('buscar_rut') && (
+          <button className="dashboard-action-btn" onClick={() => navigate('/busqueda-rut')}>
+            Búsqueda por Rut
+          </button>
+        )}
         <button className="dashboard-action-btn" onClick={() => navigate('/informes')}>
           Informes
         </button>
@@ -245,7 +249,7 @@ export default function Informes() {
 
         <div className="informe-header">
           <h1>Gestión y Repositorio de Informes DIDECO</h1>
-          <p>Almacena, organiza y descarga informes institucionales (.pdf / .docx) o exporta matrices de datos</p>
+          <p>Consulta y descarga informes institucionales (.pdf / .docx) según tus permisos de perfil</p>
         </div>
 
         {mensaje && (
@@ -254,69 +258,71 @@ export default function Informes() {
           </div>
         )}
 
-        {/* SECCIÓN 1: SUBIR NUEVO INFORME (.PDF / .DOCX) */}
-        <section className="informe-repo-card">
-          <div className="informe-repo-header">
-            <h3>📤 Subir Nuevo Informe (.pdf o .docx)</h3>
-            <span className="informe-repo-badge">{documentos.length} documento(s) guardado(s)</span>
-          </div>
-
-          <form onSubmit={handleSubirInforme} className="informe-upload-form">
-            <div className="informe-form-row">
-              <div className="informe-field">
-                <label>Título del Informe *</label>
-                <input
-                  type="text"
-                  placeholder="Ej: Informe Territorial Franja 1 - Diagnóstico PM"
-                  value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="informe-field">
-                <label>Territorio / Franja</label>
-                <select value={franja} onChange={(e) => setFranja(e.target.value)}>
-                  <option value="General">General / Comunal</option>
-                  <option value="Franja 1">Franja 1</option>
-                  <option value="Franja 2">Franja 2</option>
-                  <option value="Franja 3">Franja 3</option>
-                  <option value="Franja 4">Franja 4</option>
-                </select>
-              </div>
+        {/* SECCIÓN 1: SUBIR NUEVO INFORME (Solo Administrador y Coordinador / Supervisor) */}
+        {puedeSubir && (
+          <section className="informe-repo-card">
+            <div className="informe-repo-header">
+              <h3>📤 Subir Nuevo Informe (.pdf o .docx)</h3>
+              <span className="informe-repo-badge">{documentos.length} documento(s) guardado(s)</span>
             </div>
 
-            <div className="informe-form-row">
-              <div className="informe-field">
-                <label>Observación o Descripción (Opcional)</label>
-                <input
-                  type="text"
-                  placeholder="Breve resumen del contenido del informe..."
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                />
+            <form onSubmit={handleSubirInforme} className="informe-upload-form">
+              <div className="informe-form-row">
+                <div className="informe-field">
+                  <label>Título del Informe *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Informe Territorial Franja 1 - Diagnóstico PM"
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="informe-field">
+                  <label>Territorio / Franja</label>
+                  <select value={franja} onChange={(e) => setFranja(e.target.value)}>
+                    <option value="General">General / Comunal</option>
+                    <option value="Franja 1">Franja 1</option>
+                    <option value="Franja 2">Franja 2</option>
+                    <option value="Franja 3">Franja 3</option>
+                    <option value="Franja 4">Franja 4</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="informe-field">
-                <label>Archivo (.pdf o .docx) *</label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={handleSeleccionArchivo}
-                  className="informe-file-input"
-                  required
-                />
-              </div>
-            </div>
+              <div className="informe-form-row">
+                <div className="informe-field">
+                  <label>Observación o Descripción (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Breve resumen del contenido del informe..."
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                  />
+                </div>
 
-            <div className="informe-form-actions">
-              <button type="submit" disabled={subiendo} className="btn-subir-informe">
-                {subiendo ? '⏳ Subiendo documento...' : '💾 Guardar Informe en Repositorio'}
-              </button>
-            </div>
-          </form>
-        </section>
+                <div className="informe-field">
+                  <label>Archivo (.pdf o .docx) *</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={handleSeleccionArchivo}
+                    className="informe-file-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="informe-form-actions">
+                <button type="submit" disabled={subiendo} className="btn-subir-informe">
+                  {subiendo ? '⏳ Subiendo documento...' : '💾 Guardar Informe en Repositorio'}
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
 
         {/* SECCIÓN 2: LISTADO DE INFORMES ALMACENADOS */}
         <section className="informe-repo-card">
@@ -395,14 +401,16 @@ export default function Informes() {
                         >
                           ⬇ Descargar
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleEliminarDocumento(doc)}
-                          className="btn-doc-accion btn-doc-eliminar"
-                          title="Eliminar informe"
-                        >
-                          🗑️
-                        </button>
+                        {puedeEliminar && (
+                          <button
+                            type="button"
+                            onClick={() => handleEliminarDocumento(doc)}
+                            className="btn-doc-accion btn-doc-eliminar"
+                            title="Eliminar informe"
+                          >
+                            🗑️
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -415,23 +423,25 @@ export default function Informes() {
         {/* SECCIÓN 3: HERRAMIENTAS DE EXPORTACIÓN RÁPIDA */}
         <h3 className="informe-subtitulo-seccion">Herramientas de Exportación Rápida</h3>
         <div className="informe-grid">
-          <div className="informe-card informe-card-excel">
-            <div>
-              <div className="informe-card-icon">📊</div>
-              <h3>Exportar Matriz General (Excel)</h3>
-              <p>
-                Genera una planilla <code>.xlsx</code> completa con la totalidad de los datos capturados en terreno (RUT, Nivel IVPM, Antecedentes de Salud, Redes de Apoyo y Estado de Visita).
-              </p>
-            </div>
+          {puedeExportarExcel && (
+            <div className="informe-card informe-card-excel">
+              <div>
+                <div className="informe-card-icon">📊</div>
+                <h3>Exportar Matriz General (Excel)</h3>
+                <p>
+                  Genera una planilla <code>.xlsx</code> completa con la totalidad de los datos capturados en terreno (RUT, Nivel IVPM, Antecedentes de Salud, Redes de Apoyo y Estado de Visita).
+                </p>
+              </div>
 
-            <button
-              onClick={handleDescargarExcel}
-              disabled={descargandoExcel}
-              className="btn-informe btn-excel"
-            >
-              {descargandoExcel ? '⏳ Generando Excel...' : '💾 Descargar Excel (.xlsx)'}
-            </button>
-          </div>
+              <button
+                onClick={handleDescargarExcel}
+                disabled={descargandoExcel}
+                className="btn-informe btn-excel"
+              >
+                {descargandoExcel ? '⏳ Generando Excel...' : '💾 Descargar Excel (.xlsx)'}
+              </button>
+            </div>
+          )}
 
           <div className="informe-card informe-card-pdf">
             <div>

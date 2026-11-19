@@ -54,7 +54,7 @@ export default function Footer() {
       <div className="footer-bottom">
         <p>© {currentYear} DIDECO - La Granja. Todos los derechos reservados.</p>
         <div className="footer-socials">
-          <a href="https://www.facebook.com/MunicipalidadLaGranja" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+          <a href="https://www.facebook.com/IMunicipalidadDeLaGranja" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
             <FaFacebook />
           </a>
           <a href="https://www.instagram.com/muni_lagranja/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">

@@ -7,18 +7,28 @@ import {
   FaFileAlt, 
   FaSearch, 
   FaBuilding, 
-  FaSignOutAlt 
+  FaSignOutAlt,
+  FaChartPie,
+  FaFolderOpen,
+  FaUsersCog,
+  FaHome
 } from 'react-icons/fa';
 import logoLaGranja from '../assets/Escudo-y-texto.png';
+import {
+  obtenerUsuarioActual,
+  obtenerRolActual,
+  tienePermiso,
+  rutaInicioPorRol
+} from '../utils/permisos';
 import './navbar.css';
 
-export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aquí
+export default function Navbar({ usuario }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // 🔍 Si viene prop la usa, si no, busca en el localStorage.
-  const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const usuarioGuardado = obtenerUsuarioActual() || {};
   const nombreMostrar = usuario || usuarioGuardado.nombre || 'Funcionario';
+  const rolMostrar = obtenerRolActual(usuarioGuardado);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -29,6 +39,8 @@ export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aq
 
   const handleLogout = () => {
     localStorage.removeItem('usuario');
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
@@ -37,7 +49,7 @@ export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aq
       <div className="navbar-topbar">
         <div 
           className="navbar-logo-container" 
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate(rutaInicioPorRol())}
           style={{ cursor: 'pointer' }}
         >
           <img 
@@ -51,10 +63,21 @@ export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aq
           <span 
             className="navbar-welcome" 
             onClick={() => navigate('/perfil')}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
             title="Ir a Mi Perfil"
           >
-            Hola, {nombreMostrar}
+            <span>Hola, {nombreMostrar}</span>
+            <span
+              style={{
+                fontSize: '11px',
+                backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                padding: '3px 9px',
+                borderRadius: '999px',
+                fontWeight: 'bold'
+              }}
+            >
+              {rolMostrar}
+            </span>
           </span>
 
           <button className="navbar-toggle-btn" onClick={toggleMenu}>
@@ -65,12 +88,41 @@ export default function Navbar({ usuario }) { // 👈 Quitamos "= 'José'" de aq
 
       {menuOpen && (
         <nav className="navbar-dropdown">
-          <button className="navbar-menu-item" onClick={() => handleNavigation('/nueva-encuesta')}>
-            <FaFileAlt /> Nueva Encuesta
-          </button>
-          <button className="navbar-menu-item" onClick={() => handleNavigation('/busqueda-rut')}>
-            <FaSearch /> Búsqueda por RUT
-          </button>
+          {tienePermiso('ver_dashboard') && (
+            <>
+              <button className="navbar-menu-item" onClick={() => handleNavigation('/dashboard')}>
+                <FaHome /> Panel Principal
+              </button>
+              <button className="navbar-menu-item" onClick={() => handleNavigation('/graficos')}>
+                <FaChartPie /> Gráficos Estadísticos
+              </button>
+            </>
+          )}
+
+          {tienePermiso('crear_encuesta') && (
+            <button className="navbar-menu-item" onClick={() => handleNavigation('/nueva-encuesta')}>
+              <FaFileAlt /> Nueva Encuesta
+            </button>
+          )}
+
+          {tienePermiso('buscar_rut') && (
+            <button className="navbar-menu-item" onClick={() => handleNavigation('/busqueda-rut')}>
+              <FaSearch /> Búsqueda por RUT
+            </button>
+          )}
+
+          {tienePermiso('informes_ver') && (
+            <button className="navbar-menu-item" onClick={() => handleNavigation('/informes')}>
+              <FaFolderOpen /> Informes
+            </button>
+          )}
+
+          {tienePermiso('gestionar_usuarios') && (
+            <button className="navbar-menu-item" onClick={() => handleNavigation('/usuarios')}>
+              <FaUsersCog /> Gestión de Usuarios
+            </button>
+          )}
+
           <button 
             className="navbar-menu-item" 
             onClick={() => {

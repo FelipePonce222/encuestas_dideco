@@ -1,20 +1,5 @@
 """
 Sesiones con token firmado y protección de TODAS las rutas de la API.
-
-Cómo funciona:
-  1. El funcionario inicia sesión (/api/login) y el servidor le entrega un TOKEN firmado.
-  2. En cada petición posterior el front envía:  Authorization: Bearer <token>
-  3. Antes de ejecutar cualquier ruta /api/*, el servidor verifica la firma, que no haya
-     expirado y que el funcionario siga existiendo con la misma contraseña.
-
-La protección es "denegar por defecto": cualquier ruta /api/ nueva exige sesión automáticamente,
-salvo las que estén en RUTAS_PUBLICAS (hoy solo el login).
-
-Configuración (variables de entorno, todas opcionales):
-  DIDECO_SECRET_KEY    clave con la que se firman los tokens (recomendada en el servidor).
-                       Si no existe, se genera una y se guarda en el archivo .secret_key
-                       junto a la base de datos. ¡Ese archivo NO debe subirse a GitHub!
-  DIDECO_TOKEN_HORAS   duración de la sesión en horas (por defecto 12)
 """
 import hashlib
 import os
@@ -29,7 +14,7 @@ HORAS_SESION = float(os.environ.get("DIDECO_TOKEN_HORAS", "12"))
 RUTAS_PUBLICAS = {"/api/login"}
 
 _SAL = "dideco-sesion-v1"
-_claves = {}   # caché: ruta del archivo de clave -> clave
+_claves = {}
 
 
 def segundos_de_sesion():
@@ -47,13 +32,13 @@ def _clave_secreta():
         if os.path.exists(ruta):
             with open(ruta, encoding="utf-8") as f:
                 clave = f.read().strip()
-        if len(clave) < 32:                       # no existe (o está dañada): se crea una nueva
+        if len(clave) < 32:
             clave = secrets.token_hex(32)
             os.makedirs(os.path.dirname(ruta), exist_ok=True)
             with open(ruta, "w", encoding="utf-8") as f:
                 f.write(clave)
             try:
-                os.chmod(ruta, 0o600)             # solo el dueño puede leerla (en Windows no aplica)
+                os.chmod(ruta, 0o600)
             except OSError:
                 pass
             print(f"[Seguridad] Se creó la clave secreta de sesiones en: {ruta}")
@@ -88,14 +73,19 @@ def funcionario_desde_token(token):
 
     conn = database.get_connection()
     fila = conn.execute(
-        "SELECT id_funcionario, rut, nombre, cargo, password FROM funcionario WHERE id_funcionario = ?",
+        "SELECT id_funcionario, rut, nombre, cargo, rol, password FROM funcionario WHERE id_funcionario = ?",
         (id_funcionario,)).fetchone()
     conn.close()
 
-    # Si el funcionario fue eliminado o cambió su contraseña, el token ya no vale
     if not fila or huella != _huella(fila["password"]):
         return None
-    return {"id": fila["id_funcionario"], "rut": fila["rut"], "nombre": fila["nombre"], "cargo": fila["cargo"]}
+    return {
+        "id": fila["id_funcionario"],
+        "rut": fila["rut"],
+        "nombre": fila["nombre"],
+        "cargo": fila["cargo"],
+        "rol": fila["rol"]
+    }
 
 
 def _token_de_la_peticion():
@@ -110,7 +100,6 @@ def proteger_api(app):
 
     @app.before_request
     def _exigir_sesion():
-        # El OPTIONS es la "consulta previa" del navegador (CORS): no lleva token
         if request.method == "OPTIONS" or not request.path.startswith("/api/"):
             return None
         if request.path in RUTAS_PUBLICAS:
@@ -124,5 +113,5 @@ def proteger_api(app):
                 "message": "Sesión no válida o expirada. Inicia sesión nuevamente."
             }), 401
 
-        g.funcionario = funcionario   # disponible en la ruta como g.funcionario
+        g.funcionario = funcionario
         return None
